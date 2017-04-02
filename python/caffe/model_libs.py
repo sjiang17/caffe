@@ -191,7 +191,7 @@ def InceptionTower(net, from_layer, tower_name, layer_params, **bn_param):
 
 def CreateAnnotatedDataLayer(source, batch_size=32, backend=P.Data.LMDB,
         output_label=True, train=True, label_map_file='', anno_type=None,
-        transform_param={}, batch_sampler=[{}]):
+        transform_param={}, batch_sampler=[{}], part_sampler_prob=0):
     if train:
         kwargs = {
                 'include': dict(phase=caffe_pb2.Phase.Value('TRAIN')),
@@ -208,6 +208,7 @@ def CreateAnnotatedDataLayer(source, batch_size=32, backend=P.Data.LMDB,
     annotated_data_param = {
         'label_map_file': label_map_file,
         'batch_sampler': batch_sampler,
+        'part_sampler_prob': part_sampler_prob,
         }
     if anno_type is not None:
         annotated_data_param.update({'anno_type': anno_type})

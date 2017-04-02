@@ -103,6 +103,13 @@ message BatchSampler {
 
   // Maximum number of trials for sampling to avoid infinite loop.
   optional uint32 max_trials = 5 [default = 100];
+
+  // -- Siyu Added for sample part bboxes.
+  enum SamplerType {
+	DEFAULT = 0;
+	PART = 1;
+  }
+  optional SamplerType sampler_type = 6 [default = DEFAULT];
 }
 
 // Condition for emitting annotations.
@@ -762,6 +769,7 @@ message AnnotatedDataParameter {
   // If provided, it will replace the AnnotationType stored in each
   // AnnotatedDatum.
   optional AnnotatedDatum.AnnotationType anno_type = 3;
+  optional float part_sampler_prob = 4 [default = 0.0];
 }
 
 message ArgMaxParameter {
