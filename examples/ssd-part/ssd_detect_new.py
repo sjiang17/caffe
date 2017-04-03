@@ -25,7 +25,7 @@ caffe.set_mode_gpu()
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2
 
-voc_labelmap_file = '/home/siyu/dataset/coco/labelmap_coco-person.prototxt'
+voc_labelmap_file = '/data/siyu/dataset/coco/labelmap_coco-person.prototxt'
 file = open(voc_labelmap_file, 'r')
 voc_labelmap = caffe_pb2.LabelMap()
 text_format.Merge(str(file.read()), voc_labelmap)
@@ -46,8 +46,8 @@ def get_labelname(labelmap, labels):
     return labelnames
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-model_def = '/home/siyu/ssd-dev/part-ssd/jobs/VGGNet/ssd_coco_part/deploy.prototxt'
-model_weights = '/home/siyu/ssd-dev/part-ssd/models/VGGNet/ssd_coco_part/VGG_ssd_coco_part_iter_10000.caffemodel'
+model_def = '/data/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_clean_0.8/deploy.prototxt'
+model_weights = '/data/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_clean_0.8/100k-195k/VGG_ssd_coco_part_clean_0.8_iter_195000.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -63,8 +63,8 @@ transformer.set_channel_swap('data', (2,1,0))  # the reference model has channel
 image_resize = 512
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/home/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/home/siyu/detection_results/coco/VGG_ssd_coco_part_iter_10000'
+data_root_path = '/data/siyu/dataset/coco/Val2014/JPEGImages'
+result_root_path = '/data/siyu/detection_results/coco/ssd_coco_part_clean_0.8_195000'
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
@@ -123,7 +123,7 @@ for image_path in images:
     det_ymin = detections[0,0,:,4]
     det_xmax = detections[0,0,:,5]
     det_ymax = detections[0,0,:,6]
-    # det_clean = detections[0,0,:,7]
+    det_clean = detections[0,0,:,7]
     # det_prob = detections[0,0,:,8:39]
 
     # print detections.shape
@@ -139,7 +139,7 @@ for image_path in images:
     top_ymin = det_ymin[top_indices]
     top_xmax = det_xmax[top_indices]
     top_ymax = det_ymax[top_indices]
-    # top_clean = det_clean[top_indices]
+    top_clean = det_clean[top_indices]
 
     # colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     if draw:
@@ -148,7 +148,7 @@ for image_path in images:
 
     for i in xrange(top_conf.shape[0]):
         score = top_conf[i]
-        # clean = top_clean[i]
+        clean = top_clean[i]
 
         if draw and score >= 0.2:
             xmin = int(round(top_xmin[i] * image.shape[1]))
@@ -157,7 +157,7 @@ for image_path in images:
             ymax = int(round(top_ymax[i] * image.shape[0]))
                 
             label = top_labels[i]
-            name = 's%.2f'%(score)
+            name = 's%.2f c%.2f'%(score, clean)
             coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
             # color = colors[i % len(colors)]
             color = (random.random(), random.random(), random.random())
@@ -180,10 +180,10 @@ for image_path in images:
         json_cat_id = int(top_label_indices[i])
         json_bbox = [x_res, y_res, w_res, h_res]
         json_score = round(score, 3)
-        # json_clean = round(clean, 3)
+        json_clean = round(clean, 3)
 
         json_per_result = [{"image_id": json_img_id, "category_id": json_cat_id, \
-                            "bbox": json_bbox, "score": json_score}]
+                            "bbox": json_bbox, "score": json_score, "clean": clean}]
         json_result += json_per_result
 
     if draw:
