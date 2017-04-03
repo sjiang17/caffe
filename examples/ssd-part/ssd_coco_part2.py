@@ -352,20 +352,20 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "1"
+gpus = "1,2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 8
-accum_batch_size = 8
+batch_size = 16
+accum_batch_size = 16
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
 batch_size_per_device = batch_size
 if num_gpus > 0:
-  # batch_size_per_device = int(math.ceil(float(batch_size) / num_gpus))
-  # iter_size = int(math.ceil(float(accum_batch_size) / (batch_size_per_device * num_gpus)))
+  batch_size_per_device = int(math.ceil(float(batch_size) / num_gpus))
+  iter_size = int(math.ceil(float(accum_batch_size) / (batch_size_per_device * num_gpus)))
   solver_mode = P.Solver.GPU
   device_id = int(gpulist[0])
 
@@ -387,14 +387,14 @@ solver_param = {
     # Train parameters
     'base_lr': 0.0005,
     'weight_decay': 0.00005,
-    'lr_policy': "step",
+    'lr_policy': "multistep",
     # 'stepvalue': [280000, 360000, 400000],
-    # 'stepvalue': [80000, 120000],
-    'stepsize': 100000,
+    'stepvalue': [200000, 250000],
+    # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 250000,
+    'max_iter': 300000,
     'snapshot': 5000,
     'display': 100,
     'average_loss': 100,

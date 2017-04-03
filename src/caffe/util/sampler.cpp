@@ -241,6 +241,7 @@ void GenerateBatchSamples(const AnnotatedDatum& anno_datum,
       unit_bbox.set_ymin(0);
       unit_bbox.set_xmax(1);
       unit_bbox.set_ymax(1);
+	  //only sample normal box if sampler type = 0
 	  if (batch_samplers[i].sampler_type() == 0){
 		  GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i],
 			  sampled_bboxes);
@@ -263,18 +264,12 @@ void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
 			unit_bbox.set_ymin(0);
 			unit_bbox.set_xmax(1);
 			unit_bbox.set_ymax(1);
-			//LOG(INFO) << "batch_samplers[" << i << "].sampler_type(): " << batch_samplers[i].sampler_type();
+			// only sample part box if sampler type = 1
 			if (batch_samplers[i].sampler_type() == 1){
 				//LOG(INFO) << "sampler part";
 				//CHECK_EQ(batch_samplers[i].sampler_type(), 1);
 				GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_part_bboxes, origin_coord);
-				//LOG(INFO) << "sample part bbox";
 			}
-			//else{
-			//	//LOG(INFO) << "sampler normal";
-			//	GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_bboxes);
-			//	//LOG(INFO) << "sample origin bbox";
-			//}
 		}
 	}
 }
