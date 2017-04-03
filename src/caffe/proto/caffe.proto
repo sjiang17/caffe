@@ -1043,7 +1043,8 @@ message DetectionOutputParameter {
   // If provided, save outputs to video file.
   optional string save_file = 12;
   optional float clean_score_threshold = 13 [default = 0.5];
-  optional float clean_nms_threshold = 14 [default = 0.2];
+  optional float clean_nms_threshold = 14 [default = 0.01];
+  optional float clean_nms_conf_diff = 15 [default = 0.0];
 }
 
 message DropoutParameter {

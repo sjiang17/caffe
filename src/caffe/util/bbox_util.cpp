@@ -2287,7 +2287,8 @@ template<typename Dtype>
 void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 	const float score_threshold, const float nms_threshold, const float eta,
 	const int top_k, vector<int>* indices,
-	const Dtype* clean_scores, const float clean_score_threshold, const float clean_nms_threshold){
+	const Dtype* clean_scores, const float clean_score_threshold, 
+	const float clean_nms_threshold, const float clean_nms_conf_diff){
 
 	// Get top_k scores (with corresponding indices).
 	vector<pair<Dtype, int> > score_index_vec;
@@ -2351,7 +2352,7 @@ void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 					float coverage1 = BoxCoverage(bboxes + idx * 4, bboxes + kept_idx * 4);
 					float coverage2 = BoxCoverage(bboxes + kept_idx * 4, bboxes + idx * 4);
 					float score_diff = scores[kept_idx] - scores[idx];
-					keep = !(coverage1 >= 0.7 && coverage2 < 0.5 && score_diff > 0.3);
+					keep = !(coverage1 >= 0.7 && coverage2 < 0.5 && score_diff >= clean_nms_conf_diff);
 				}
 				else{
 					break;
@@ -2370,13 +2371,13 @@ void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 
 template void ApplyCleanNMSFast(const float* bboxes, const float* scores, const int num,
 	const float score_threshold, const float nms_threshold, const float eta,
-	const int top_k, vector<int>* indices,
-	const float* clean_scores, const float clean_score_threshold, const float clean_nms_threshold);
+	const int top_k, vector<int>* indices,	const float* clean_scores, const float clean_score_threshold, 
+	const float clean_nms_threshold, const float clean_nms_conf_diff);
 
 template void ApplyCleanNMSFast(const double* bboxes, const double* scores, const int num,
 	const float score_threshold, const float nms_threshold, const float eta,
-	const int top_k, vector<int>* indices,
-	const double* clean_scores, const float clean_score_threshold, const float clean_nms_threshold);
+	const int top_k, vector<int>* indices, const double* clean_scores, const float clean_score_threshold, 
+	const float clean_nms_threshold, const float clean_nms_conf_diff);
 
 
 void CumSum(const vector<pair<float, int> >& pairs, vector<int>* cumsum) {

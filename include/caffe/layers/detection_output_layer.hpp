@@ -116,6 +116,7 @@ class DetectionOutputLayer : public Layer<Dtype> {
 
   float clean_score_threshold_;
   float clean_nms_threshold_;
+  float clean_nms_conf_diff_;
 
 };
 

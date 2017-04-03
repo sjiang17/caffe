@@ -466,7 +466,8 @@ template <typename Dtype>
 void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 	const float score_threshold, const float nms_threshold, const float eta,
 	const int top_k, vector<int>* indices,
-	const Dtype* clean_scores, const float clean_score_threshold, const float clean_nms_threshold);
+	const Dtype* clean_scores, const float clean_score_threshold, 
+	const float clean_nms_threshold, const float clean_nms_conf_diff);
 
 // Compute cumsum of a set of pairs.
 void CumSum(const vector<pair<float, int> >& pairs, vector<int>* cumsum);
