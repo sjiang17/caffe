@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include "boost/iterator/counting_iterator.hpp"
 
@@ -343,8 +344,20 @@ bool MeetEmitConstraint(const NormalizedBBox& src_bbox,
     } else {
       return false;
     }
-  } else if (emit_type == EmitConstraint_EmitType_MIN_OVERLAP) {
-    float bbox_coverage = BBoxCoverage(bbox, src_bbox);
+  }
+  else if (emit_type == EmitConstraint_EmitType_MIN_OVERLAP) {
+	float bbox_coverage = BBoxCoverage(bbox, src_bbox);
+	/*if (bbox_coverage > 0.1){
+		std::ofstream part_ratio_file;
+		part_ratio_file.open("part_ratio_file.txt", std::ofstream::app);
+		if (bbox_coverage > 0.5){
+			part_ratio_file << "0\n";
+		}
+		else{
+			part_ratio_file << "1\n";
+		}
+		part_ratio_file.close();
+	}*/
     return bbox_coverage > emit_constraint.emit_overlap();
   } else {
     LOG(FATAL) << "Unknown emit type.";

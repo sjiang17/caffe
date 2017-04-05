@@ -79,14 +79,14 @@ resume_training = False
 remove_old_models = False
 
 # The database file for training data. Created by data/coco/create_data.sh
-train_data = "/home/siyu/dataset/coco/lmdb/coco_train-one_lmdb"
+train_data = "/home/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
 # The database file for testing data. Created by data/coco/create_data.sh
 test_data = "/home/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
 # Specify the batch sampler.
 resize_width = 512
 resize_height = 512
 resize = "{}x{}".format(resize_width, resize_height)
-part_sampler_prob = 1.1
+part_sampler_prob = 0.8
 batch_sampler = [
         {
                 'sampler_type': 1,
@@ -352,13 +352,13 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "1"
+gpus = "2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 4
-accum_batch_size = 4
+batch_size = 1
+accum_batch_size = 1
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -385,7 +385,7 @@ test_iter = num_test_image / test_batch_size
 
 solver_param = {
     # Train parameters
-    'base_lr': 0.0005,
+    'base_lr': 0.0001,
     'weight_decay': 0.00005,
     'lr_policy': "step",
     # 'stepvalue': [280000, 360000, 400000],
@@ -394,9 +394,9 @@ solver_param = {
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 10,
-    'snapshot': 5000,
-    'display': 100,
+    'max_iter': 45174,
+    'snapshot': 40000,
+    'display': 1000,
     'average_loss': 100,
     'type': "SGD",
     'solver_mode': solver_mode,
@@ -405,7 +405,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 5000,
+    'test_interval': 50000000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
