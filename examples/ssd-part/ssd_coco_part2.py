@@ -352,7 +352,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "1,2"
+gpus = "0,2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
@@ -389,13 +389,13 @@ solver_param = {
     'weight_decay': 0.00005,
     'lr_policy': "multistep",
     # 'stepvalue': [280000, 360000, 400000],
-    'stepvalue': [200000, 250000],
+    'stepvalue': [500000, 1000000],
     # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 300000,
-    'snapshot': 5000,
+    'max_iter': 3000000,
+    'snapshot': 10000,
     'display': 100,
     'average_loss': 100,
     'type': "SGD",
