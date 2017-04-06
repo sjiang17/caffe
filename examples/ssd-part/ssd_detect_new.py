@@ -19,7 +19,7 @@ import sys
 sys.path.insert(0, 'python')
 
 import caffe
-caffe.set_device(0)
+caffe.set_device(1)
 caffe.set_mode_gpu()
 
 from google.protobuf import text_format
@@ -47,7 +47,7 @@ def get_labelname(labelmap, labels):
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
 model_def = '/data/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_clean_0.8/deploy.prototxt'
-model_weights = '/data/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_clean_0.8/100k-195k/VGG_ssd_coco_part_clean_0.8_iter_195000.caffemodel'
+model_weights = '/data/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_clean_0.8/VGG_ssd_coco_part_clean_0.8_iter_220000.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -64,7 +64,7 @@ image_resize = 512
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
 data_root_path = '/data/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/data/siyu/detection_results/coco/ssd_coco_part_clean_0.8_195000'
+result_root_path = '/data/siyu/detection_results/coco/ssd_coco_part_clean_0.8_220k_diff0.2'
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
@@ -88,9 +88,8 @@ total_time = 0
 json_result = list()
 
 for image_path in images:
-    
     # draw = (cnt % 100 == 0)
-    draw = True
+    draw = False
 
     if cnt % 1000 == 0:
         print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), ("finished %d images" % cnt)
@@ -183,7 +182,7 @@ for image_path in images:
         json_clean = round(clean, 3)
 
         json_per_result = [{"image_id": json_img_id, "category_id": json_cat_id, \
-                            "bbox": json_bbox, "score": json_score, "clean": clean}]
+                            "bbox": json_bbox, "score": json_score, "clean": json_clean}]
         json_result += json_per_result
 
     if draw:

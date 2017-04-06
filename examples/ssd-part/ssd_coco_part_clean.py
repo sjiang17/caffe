@@ -394,13 +394,13 @@ solver_param = {
     'weight_decay': 0.00005,
     'lr_policy': "multistep",
     # 'stepvalue': [280000, 360000, 400000],
-    'stepvalue': [200000, 250000],
+    'stepvalue': [500000, 1000000],
     # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 300000,
-    'snapshot': 5000,
+    'max_iter': 100000000,
+    'snapshot': 10000,
     'display': 100,
     'average_loss': 100,
     'type': "SGD",
@@ -435,7 +435,7 @@ det_out_param = {
     'code_type': code_type,
     'clean_score_threshold': 0.6,
     'clean_nms_threshold': 0.01,
-    'clean_nms_conf_diff': 0.0,
+    'clean_nms_conf_diff': 0.2,
     }
 
 # parameters for evaluating detection results.
