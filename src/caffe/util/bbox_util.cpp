@@ -757,12 +757,6 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
 				  max_gt_idx = j;
 				  max_overlap = overlap;
 			  }
-			  /*if (overlap >= overlap_threshold && overlap <= 0.8){
-				  temp_extra_neg_indices->push_back(i);
-				  temp_extra_neg_match_indices->insert(std::pair<int, int>(i, gt_indices[j]));
-				  max_gt_idx = -2;
-				  break;
-			  }*/
 		  }
           
         } // traverse all gt
@@ -779,60 +773,19 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
       LOG(FATAL) << "Unknown matching type.";
       break;
   }
-
-  //std::ofstream outfile;
-  //outfile.open("testfile.txt");
-  //outfile << "positive: \n";
-  //for (int k = 0; k < num_pred; k++){
-	 // if ((*match_indices)[k] > -1){
-		//  float xmin = pred_bboxes[k].xmin();
-		//  float xmax = pred_bboxes[k].xmax();
-		//  float ymin = pred_bboxes[k].ymin();
-		//  float ymax = pred_bboxes[k].ymax();
-		//  outfile << k << " " << xmin << " " << xmax << " " << ymin << " " << ymax << "\n";
-	 // }
-  //}
-  //outfile << "negative: \n";
-  //for (int k = 0; k < num_pred; k++){
-	 // if ((*match_indices)[k] == -1){
-		//  float xmin = pred_bboxes[k].xmin();
-		//  float xmax = pred_bboxes[k].xmax();
-		//  float ymin = pred_bboxes[k].ymin();
-		//  float ymax = pred_bboxes[k].ymax();
-		//  outfile << k << " " << xmin << " " << xmax << " " << ymin << " " << ymax << "\n";
-	 // }
-  //}
-  //outfile << "hard negative: \n";
-  //for (int k = 0; k < num_pred; k++){
-	 // if ((*match_indices)[k] == -2){
-		//  float xmin = pred_bboxes[k].xmin();
-		//  float xmax = pred_bboxes[k].xmax();
-		//  float ymin = pred_bboxes[k].ymin();
-		//  float ymax = pred_bboxes[k].ymax();
-		//  outfile << k << " " << xmin << " " << xmax << " " << ymin << " " << ymax << "\n";
-	 // }
-  //}
-  //outfile.close();
-
-
-  //LOG(INFO) << "temp_extra_neg_indices size: " << temp_extra_neg_indices->size();
   return;
 }
 
 //Siyu
 void MarkCleanGtBBoxes(const vector < NormalizedBBox >& gt_bboxes, vector<int>* gt_clean, const float threshold){
-	//gt_clean->clear;
-	//LOG(INFO) << "Inside MarkCleanGtBBoxes";
 	for (int i = 0; i < gt_bboxes.size(); i++){
 		for (int j = 0; j < gt_bboxes.size(); j++){
 			if (i == j){
 				continue;
 			}
 			float gt_coverage = BBoxCoverage(gt_bboxes[j], gt_bboxes[i]); // the coverage of box j by box i
-			//LOG(INFO) << "----Coverage " << j << " by " << i << " : " << gt_coverage;
 			if (gt_coverage > threshold){
 				(*gt_clean)[i] = 1;
-				//LOG(INFO) << "----Marked an unclean box: " << i;
 				break;
 			}
 		}
@@ -2294,11 +2247,6 @@ void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 	vector<pair<Dtype, int> > score_index_vec;
 	GetMaxScoreIndex(scores, num, score_threshold, top_k, &score_index_vec);
 
-	/*for (int n = 0; n < score_index_vec.size(); n++){
-		int id = score_index_vec[n].second;
-		LOG(INFO) << "scores_index " << n << " " << id << " " << scores[id];
-	}*/
-
 	// num: number of priors. score_threshold: 0.01
 	// Do nms.
 	float adaptive_threshold = nms_threshold;
@@ -2328,45 +2276,31 @@ void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
 
 	vector<pair<Dtype, int> > area_index_vec;
 	GetMaxAreaIndex(bboxes, temp_indices, &area_index_vec);
-	//LOG(INFO) << "area_index_vec.size() " << area_index_vec.size();
-	
-	/*for (int n = 0; n < area_index_vec.size(); n++){
-		//if (n>10)
-		//	break;
-		int id = area_index_vec[n].second;
-		LOG(INFO) << n << " " << id << "  " << clean_scores[id] << "scores " << scores[id];
-	}*/
-
-
 
 	indices->clear();
 	while (area_index_vec.size() != 0){
 		const int idx = area_index_vec.front().second;
 		bool keep = true;
-		//if (scores[idx] > clean_nms_threshold){
-			for (int m = 0; m < indices->size(); m++){
-				const int kept_idx = (*indices)[m];
-				if (clean_scores[kept_idx] >= clean_score_threshold)// || scores[kept_idx] <= clean_nms_threshold)
-					continue;
-				if (keep){
-					float coverage1 = BoxCoverage(bboxes + idx * 4, bboxes + kept_idx * 4);
-					float coverage2 = BoxCoverage(bboxes + kept_idx * 4, bboxes + idx * 4);
-					float score_diff = scores[kept_idx] - scores[idx];
-					keep = !(coverage1 >= 0.7 && coverage2 < 0.5 && score_diff >= clean_nms_conf_diff);
-				}
-				else{
-					break;
-				}
+		for (int m = 0; m < indices->size(); m++){
+			const int kept_idx = (*indices)[m];
+			if (clean_scores[kept_idx] >= clean_score_threshold)
+				continue;
+			if (keep){
+				float coverage1 = BoxCoverage(bboxes + idx * 4, bboxes + kept_idx * 4);
+				float coverage2 = BoxCoverage(bboxes + kept_idx * 4, bboxes + idx * 4);
+				float score_diff = scores[kept_idx] - scores[idx];
+				keep = !(coverage1 >= 0.7 && coverage2 < 0.5 && score_diff >= clean_nms_conf_diff);
 			}
-		//}
+			else{
+				break;
+			}
+		}
 		if (keep){
 			indices->push_back(idx);
 		}
 		area_index_vec.erase(area_index_vec.begin());
 	}
-
 	//LOG(INFO) << "indices->size() " << indices->size();
-
 }
 
 template void ApplyCleanNMSFast(const float* bboxes, const float* scores, const int num,
