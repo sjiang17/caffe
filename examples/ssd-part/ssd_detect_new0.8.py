@@ -19,7 +19,7 @@ import sys
 sys.path.insert(0, 'python')
 
 import caffe
-caffe.set_device(2)
+caffe.set_device(0)
 caffe.set_mode_gpu()
 
 from google.protobuf import text_format

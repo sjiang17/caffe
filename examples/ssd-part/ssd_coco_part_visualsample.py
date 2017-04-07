@@ -91,16 +91,16 @@ batch_sampler = [
         {
                 'sampler_type': 1,
                 'sampler': {
-                        'min_scale': 0.1,
-                        'max_scale': 0.5,
+                        'min_scale': 0.2,
+                        'max_scale': 0.7,
                         'min_aspect_ratio': 0.5,
                         'max_aspect_ratio': 2.0,
                 },
                 'sample_constraint':{
-                        'min_object_coverage': 0.1,
+                        'min_object_coverage': 0.2,
                         'max_object_coverage': 0.5,
                 },
-                'max_trials': 50,
+                'max_trials': 100,
                 'max_sample': 1,
         },
         {
@@ -352,7 +352,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "2"
+gpus = "1"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
@@ -396,7 +396,7 @@ solver_param = {
     'iter_size': iter_size,
     'max_iter': 45174,
     'snapshot': 40000,
-    'display': 1000,
+    'display': 100,
     'average_loss': 100,
     'type': "SGD",
     'solver_mode': solver_mode,

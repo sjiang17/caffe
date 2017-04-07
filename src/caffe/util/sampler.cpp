@@ -252,8 +252,8 @@ void GenerateBatchSamples(const AnnotatedDatum& anno_datum,
 
 void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
 	const vector<BatchSampler>& batch_samplers,
-	vector<NormalizedBBox>* sampled_part_bboxes,
-	const vector<float>& origin_coord) {
+	vector<NormalizedBBox>* sampled_part_bboxes
+	/*const vector<float>& origin_coord*/) {
 	sampled_part_bboxes->clear();
 	vector<NormalizedBBox> object_bboxes;
 	GroupObjectBBoxes(anno_datum, &object_bboxes);
@@ -268,7 +268,7 @@ void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
 			if (batch_samplers[i].sampler_type() == 1){
 				//LOG(INFO) << "sampler part";
 				//CHECK_EQ(batch_samplers[i].sampler_type(), 1);
-				GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_part_bboxes, origin_coord);
+				GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_part_bboxes);//, origin_coord);
 			}
 		}
 	}

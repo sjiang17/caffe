@@ -171,9 +171,9 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
                                             distort_datum.mutable_datum());
       if (transform_param.has_expand_param()) {
         expand_datum = new AnnotatedDatum();
-		if (is_sampler_part)
+		/*if (is_sampler_part)
         	this->data_transformer_->ExpandImage(distort_datum, expand_datum, &origin_coord);
-		else
+		else*/
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
         expand_datum = &distort_datum;
@@ -181,9 +181,9 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     } else {
       if (transform_param.has_expand_param()) {
         expand_datum = new AnnotatedDatum();
-		if (is_sampler_part)
+		/*if (is_sampler_part)
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum, &origin_coord);
-		else
+		else*/
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
         expand_datum = &anno_datum;
@@ -199,14 +199,11 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     bool has_sampled = false;
     if (batch_samplers_.size() > 0) {
       // Generate sampled bboxes from expand_datum.
-      //vector<NormalizedBBox> sampled_bboxes;
-	  //vector<NormalizedBBox> sampled_part_bboxes;
-      //GenerateBatchSamples(*expand_datum, batch_samplers_, &sampled_bboxes);
 	  if (is_sampler_part){
 		  vector<NormalizedBBox> sampled_part_bboxes;
-		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes, origin_coord);
+		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes);// , origin_coord);
 		  if (sampled_part_bboxes.size() > 0){
-			  //LOG(INFO) << "croped part";
+			  //LOG(INFO) << "croped part" << sampled_part_bboxes.size();
 
 			  /*float origin_width = origin_coord[4];
 			  float origin_height = origin_coord[5];
@@ -243,9 +240,8 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 			  has_sampled = true;
 		  }
 		  else {
-			  //LOG(INFO) << "sampled part bboxes ------ not success";
-			  //sampled_datum = expand_datum;
-			  vector<NormalizedBBox> sampled_bboxes;
+			  LOG(INFO) << "sampled part bboxes ------ not success";
+			   vector<NormalizedBBox> sampled_bboxes;
 			  GenerateBatchSamples(*expand_datum, batch_samplers_, &sampled_bboxes);
 			  if (sampled_bboxes.size() > 0){
 				  //LOG(INFO) << "sampled normal bboxes";
@@ -277,41 +273,6 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 			  sampled_datum = expand_datum;
 		  }
 	  }
-	  //LOG(INFO) << "sampled_part_bboxes: " << sampled_part_bboxes.size();
-	  //LOG(INFO) << "sampled_bboxes: " << sampled_bboxes.size();
-	  
-	  //if (sampled_part_bboxes.size() > 0){
-		 // float prob_thrshld = anno_data_param.part_sampler_prob();
-		 // LOG(INFO) << "prob_thrshld: " << prob_thrshld;
-		 // float prob_partsample;
-		 // caffe_rng_uniform(1, 0.f, 1.f, &prob_partsample);
-		 // if (prob_partsample < prob_thrshld){
-			//  LOG(INFO) << "sample part";
-			//  sampled_datum = new AnnotatedDatum();
-			//  this->data_transformer_->CropImage(*expand_datum,
-			//									  sampled_part_bboxes[0],
-			//									  sampled_datum);
-			//  has_sampled = true;
-		 // }
-		 // else if(sampled_bboxes.size() > 0){
-			//  LOG(INFO) << "sample normal";
-			//  int rand_idx = caffe_rng_rand() % sampled_bboxes.size();
-			//  sampled_datum = new AnnotatedDatum();
-			//  this->data_transformer_->CropImage(*expand_datum,
-			//									  sampled_bboxes[rand_idx],
-			//									  sampled_datum);
-			//  has_sampled = true;
-		 // }
-	  //}
-	  //else if(sampled_bboxes.size() > 0) {
-		 // LOG(INFO) << "no part sample sucessfully, sample normal";
-   //     // Randomly pick a sampled bbox and crop the expand_datum.
-   //     int rand_idx = caffe_rng_rand() % sampled_bboxes.size();
-   //     sampled_datum = new AnnotatedDatum();
-   //     this->data_transformer_->CropImage(*expand_datum,
-   //                                        sampled_bboxes[rand_idx],
-   //                                        sampled_datum);
-   //     has_sampled = true;
 
     } else {
       sampled_datum = expand_datum;
