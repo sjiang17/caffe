@@ -169,9 +169,9 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
                                             distort_datum.mutable_datum());
       if (transform_param.has_expand_param()) {
         expand_datum = new AnnotatedDatum();
-		if (is_sampler_part)
+		/*if (is_sampler_part)
         	this->data_transformer_->ExpandImage(distort_datum, expand_datum, &origin_coord);
-		else
+		else*/
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
         expand_datum = &distort_datum;
@@ -179,9 +179,9 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     } else {
       if (transform_param.has_expand_param()) {
         expand_datum = new AnnotatedDatum();
-		if (is_sampler_part)
+		/*if (is_sampler_part)
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum, &origin_coord);
-		else
+		else*/
 			this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
         expand_datum = &anno_datum;
@@ -193,7 +193,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       // Generate sampled bboxes from expand_datum.
 	  if (is_sampler_part){
 		  vector<NormalizedBBox> sampled_part_bboxes;
-		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes, origin_coord);
+		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes/*, origin_coord*/);
 		  if (sampled_part_bboxes.size() > 0){
 			  //LOG(INFO) << "sampled part bboxes ------";
 			  sampled_datum = new AnnotatedDatum();
