@@ -46,8 +46,8 @@ def get_labelname(labelmap, labels):
     return labelnames
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-model_def = '/home/siyu/ssd-dev/part-ssd/jobs/VGGNet/ssd_coco_part_0.1/deploy.prototxt'
-model_weights = '/home/siyu/ssd-dev/part-ssd/models/VGGNet/ssd_coco_part_0.1/VGG_ssd_coco_part_0.1_iter_150000.caffemodel'
+model_def = '/home/siyu/ssd-dev/part-ssd/jobs/VGGNet/ssd_coco_part_0.8/deploy.prototxt'
+model_weights = '/home/siyu/ssd-dev/part-ssd/models/VGGNet/ssd_coco_part_0.8/VGG_ssd_coco_part_0.8_iter_300000.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -63,8 +63,8 @@ transformer.set_channel_swap('data', (2,1,0))  # the reference model has channel
 image_resize = 512
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/home/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/home/siyu/detection_results/coco/ssd_coco_part_0.1_150000'
+data_root_path = '/home/siyu/dataset/coco/Train2014/JPEGImages'
+result_root_path = '/home/siyu/detection_results/coco/Train_ssd_coco_part_0.8_300000_v3'
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
@@ -90,12 +90,12 @@ json_result = list()
 for image_path in images:
     
     # draw = (cnt % 100 == 0)
-    draw = True
+    draw = False 
 
     if cnt % 1000 == 0:
         print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), ("finished %d images" % cnt)
 
-    json_img_id = int(image_path.split("COCO_val2014_")[1].split(".jpg")[0])
+    json_img_id = int(image_path.split("COCO_train2014_")[1].split(".jpg")[0])
 
     image = caffe.io.load_image(image_path)
     
@@ -150,7 +150,7 @@ for image_path in images:
         score = top_conf[i]
         # clean = top_clean[i]
 
-        if draw and score >= 0.2:
+        if draw and score >= 0.1:
             xmin = int(round(top_xmin[i] * image.shape[1]))
             ymin = int(round(top_ymin[i] * image.shape[0]))
             xmax = int(round(top_xmax[i] * image.shape[1]))
