@@ -34,6 +34,11 @@ void GenerateBatchSamples(const AnnotatedDatum& anno_datum,
                           const vector<BatchSampler>& batch_samplers,
                           vector<NormalizedBBox>* sampled_bboxes);
 
+void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
+	const vector<BatchSampler>& batch_samplers,
+	vector<NormalizedBBox>* sampled_part_bboxes,
+	const vector<float>& origin_coord);
+
 }  // namespace caffe
 
 #endif  // CAFFE_UTIL_SAMPLER_H_

@@ -103,6 +103,13 @@ message BatchSampler {
 
   // Maximum number of trials for sampling to avoid infinite loop.
   optional uint32 max_trials = 5 [default = 100];
+
+  // -- Siyu Added for sample part bboxes.
+  enum SamplerType {
+	DEFAULT = 0;
+	PART = 1;
+  }
+  optional SamplerType sampler_type = 6 [default = DEFAULT];
 }
 
 // Condition for emitting annotations.
@@ -762,6 +769,7 @@ message AnnotatedDataParameter {
   // If provided, it will replace the AnnotationType stored in each
   // AnnotatedDatum.
   optional AnnotatedDatum.AnnotationType anno_type = 3;
+  optional float part_sampler_prob = 4 [default = 0.0];
 }
 
 message ArgMaxParameter {
@@ -1034,6 +1042,9 @@ message DetectionOutputParameter {
   optional float visualize_threshold = 11;
   // If provided, save outputs to video file.
   optional string save_file = 12;
+  optional float clean_score_threshold = 13 [default = 0.5];
+  optional float clean_nms_threshold = 14 [default = 0.01];
+  optional float clean_nms_conf_diff = 15 [default = 0.0];
 }
 
 message DropoutParameter {
@@ -1312,6 +1323,11 @@ message MultiBoxLossParameter {
   optional NonMaximumSuppressionParameter nms_param = 21;
   optional int32 sample_size = 22 [default = 64];
   optional bool use_prior_for_nms = 23 [default = false];
+  optional float clean_weight = 24 [default = 1.0];
+  optional float gt_clean_thrshld = 25 [default = 0.7];
+  optional float cover_thrshld_predbygt = 26 [default = 0.7];
+  optional float cover_thrshld_gtbypred_max = 27 [default = 0.5];
+  optional float cover_thrshld_gtbypred_min = 28 [default = 0.0];
 }
 
 message MVNParameter {

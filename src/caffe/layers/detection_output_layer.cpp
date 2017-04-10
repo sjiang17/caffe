@@ -117,16 +117,26 @@ void DetectionOutputLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     data_transformer_->InitRand();
     save_file_ = detection_output_param.save_file();
   }
+
+  clean_score_threshold_ = detection_output_param.clean_score_threshold();
+  clean_nms_threshold_ = detection_output_param.clean_nms_threshold();
+  clean_nms_conf_diff_ = detection_output_param.clean_nms_conf_diff();
+
   bbox_preds_.ReshapeLike(*(bottom[0]));
   if (!share_location_) {
     bbox_permute_.ReshapeLike(*(bottom[0]));
   }
   conf_permute_.ReshapeLike(*(bottom[1]));
+
+  clean_permute_.ReshapeLike(*(bottom[3]));
+
 }
 
 template <typename Dtype>
 void DetectionOutputLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
+	//LOG(INFO) << "inside output reshape";
+
   if (need_save_) {
     CHECK_LE(name_count_, names_.size());
     if (name_count_ % num_test_image_ == 0) {
@@ -165,6 +175,10 @@ void DetectionOutputLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       << "Number of priors must match number of location predictions.";
   CHECK_EQ(num_priors_ * num_classes_, bottom[1]->channels())
       << "Number of priors must match number of confidence predictions.";
+
+  CHECK_EQ(num_priors_ * 1, bottom[3]->channels())
+	  << "Number of priors must match number of clean predictions.";
+
   // num() and channels() are 1.
   vector<int> top_shape(2, 1);
   // Since the number of bboxes to be kept is unknown before nms, we manually
@@ -172,8 +186,8 @@ void DetectionOutputLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   top_shape.push_back(1);
   // Each row is a 7 dimension vector, which stores
   // [image_id, label, confidence, xmin, ymin, xmax, ymax]
-  top_shape.push_back(7);
-  top[0]->Reshape(top_shape);
+  top_shape.push_back(8);
+  top[0]->Reshape(top_shape); // 1* 1 * 1 * 8
 }
 
 template <typename Dtype>
@@ -183,7 +197,7 @@ void DetectionOutputLayer<Dtype>::Forward_cpu(
   const Dtype* conf_data = bottom[1]->cpu_data();
   const Dtype* prior_data = bottom[2]->cpu_data();
   const int num = bottom[0]->num();
-
+  LOG(INFO) << "inside output forward cpu";
   // Retrieve all location predictions.
   vector<LabelBBox> all_loc_preds;
   GetLocPredictions(loc_data, num, num_priors_, num_loc_classes_,
@@ -424,7 +438,7 @@ void DetectionOutputLayer<Dtype>::Forward_cpu(
           ptree output;
           output.add_child("detections", detections_);
           std::stringstream ss;
-          write_json(ss, output);
+          //write_json(ss, output);
           std::string rv = boost::regex_replace(ss.str(), exp, "$1");
           outfile << rv.substr(rv.find("["), rv.rfind("]") - rv.find("["))
               << std::endl << "]" << std::endl;

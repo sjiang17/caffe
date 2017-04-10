@@ -119,11 +119,17 @@ class DataTransformer {
   void ExpandImage(const Datum& datum, const float expand_ratio,
                    NormalizedBBox* expand_bbox, Datum* expanded_datum);
 
+  void ExpandImage(const Datum& datum, const float expand_ratio,
+	  NormalizedBBox* expand_bbox, Datum* expanded_datum, vector<float>* origin_coord);
+
   /**
    * @brief Expand the datum and adjust AnnotationGroup.
    */
   void ExpandImage(const AnnotatedDatum& anno_datum,
                    AnnotatedDatum* expanded_anno_datum);
+
+  void ExpandImage(const AnnotatedDatum& anno_datum,
+	  AnnotatedDatum* expanded_anno_datum, vector<float>* origin_coord);
 
   /**
    * @brief Apply distortion to the datum.
@@ -169,6 +175,9 @@ class DataTransformer {
    */
   void ExpandImage(const cv::Mat& img, const float expand_ratio,
                    NormalizedBBox* expand_bbox, cv::Mat* expand_img);
+
+  void ExpandImage(const cv::Mat& img, const float expand_ratio,
+				NormalizedBBox* expand_bbox, cv::Mat* expand_img, vector<float>* origin_coord);
 
   void TransformInv(const Blob<Dtype>* blob, vector<cv::Mat>* cv_imgs);
   void TransformInv(const Dtype* data, cv::Mat* cv_img, const int height,
