@@ -254,7 +254,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('ssd_coco_part_finetune_clean_0.8')
+job_name = "{}".format('ssd_coco_part_finetune_clean_lbl_0.8')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -281,7 +281,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
 name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "/home/siyu/ssd-dev/part-ssd/models/VGGNet/VGG_ssd_coco_origin_iter_500000.caffemodel"
+pretrain_model = "models/VGGNet/modify_iter_250000.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
 
@@ -312,7 +312,7 @@ multibox_loss_param = {
     'neg_overlap': 0.5,
     'code_type': code_type,
     'ignore_cross_boundary_bbox': ignore_cross_boundary_bbox,
-    'clean_weight': 5.0,
+    'clean_weight': 3.0,
     'gt_clean_thrshld': 0.7,
     'cover_thrshld_predbygt': 0.7,
     'cover_thrshld_gtbypred_max': 0.5,
