@@ -312,7 +312,7 @@ multibox_loss_param = {
     'neg_overlap': 0.5,
     'code_type': code_type,
     'ignore_cross_boundary_bbox': ignore_cross_boundary_bbox,
-    'clean_weight': 5.0,
+    'clean_weight': 4.0,
     'gt_clean_thrshld': 0.7,
     'cover_thrshld_predbygt': 0.7,
     'cover_thrshld_gtbypred_max': 0.5,
