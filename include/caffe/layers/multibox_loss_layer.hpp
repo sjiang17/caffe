@@ -93,6 +93,11 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   bool bp_inside_;
   MiningType mining_type_;
 
+  float gt_clean_thrshld_;
+  float cover_thrshld_predbygt_;
+  float cover_thrshld_gtbypred_max_;
+  float cover_thrshld_gtbypred_min_;
+
   int loc_classes_;
   int num_gt_;
   int num_;
@@ -102,6 +107,7 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   int num_conf_;
   vector<map<int, vector<int> > > all_match_indices_;
   vector<vector<int> > all_neg_indices_;
+  vector<vector<int> > all_clean_gt_indices_;
 
   // How to normalize the loss.
   LossParameter_NormalizationMode normalization_;

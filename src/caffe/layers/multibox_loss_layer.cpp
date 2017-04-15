@@ -168,16 +168,20 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   // Find matches between source bboxes and ground truth bboxes.
   vector<map<int, vector<float> > > all_match_overlaps;
+  vector<vector<int> >all_extra_neg_indices; //To save the extra neg prior box index of all images. (img id, (  , prior id)
+  vector<map<int, int> >all_extra_neg_match_indices; //Save the matched gt id for neg priors. (img id, (prior id, gt id))
+
   FindMatches(all_loc_preds, all_gt_bboxes, prior_bboxes, prior_variances,
-              multibox_loss_param_, &all_match_overlaps, &all_match_indices_);
+	  multibox_loss_param_, &all_match_overlaps, &all_match_indices_,
+	  &all_clean_gt_indices_, &all_extra_neg_indices, &all_extra_neg_match_indices);
 
   num_matches_ = 0;
   int num_negs = 0;
   // Sample hard negative (and positive) examples based on mining type.
   MineHardExamples(*bottom[1], all_loc_preds, all_gt_bboxes, prior_bboxes,
-                   prior_variances, all_match_overlaps, multibox_loss_param_,
-                   &num_matches_, &num_negs, &all_match_indices_,
-                   &all_neg_indices_);
+				  prior_variances, all_match_overlaps, multibox_loss_param_, 
+				  all_extra_neg_indices, &num_matches_, &num_negs, 
+				  &all_match_indices_, &all_neg_indices_);
 
   if (num_matches_ >= 1) {
     // Form data to pass on to loc_loss_layer_.
@@ -367,6 +371,7 @@ void MultiBoxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   // After backward, remove match statistics.
   all_match_indices_.clear();
   all_neg_indices_.clear();
+  all_clean_gt_indices_.clear();
 }
 
 INSTANTIATE_CLASS(MultiBoxLossLayer);
