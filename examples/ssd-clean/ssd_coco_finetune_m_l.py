@@ -86,23 +86,8 @@ test_data = "/home/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
 resize_width = 512
 resize_height = 512
 resize = "{}x{}".format(resize_width, resize_height)
-part_sampler_prob = 0.8
+part_sampler_prob = 0.0
 batch_sampler = [
-        {
-                'sampler_type': 1,
-                'sampler': {
-                        'min_scale': 0.2,
-                        'max_scale': 0.6,
-                        'min_aspect_ratio': 0.5,
-                        'max_aspect_ratio': 2.0,
-                },
-                'sample_constraint':{
-                        'min_object_coverage': 0.2,
-                        'max_object_coverage': 0.5,
-                },
-                'max_trials': 100,
-                'max_sample': 1,
-        },
         {
                 'sampler': {
                         },
@@ -222,13 +207,9 @@ train_transform_param = {
                 'prob': 0.5,
                 'max_expand_ratio': 4.0,
                 },
-        # 'emit_constraint': {
-        #     'emit_type': caffe_pb2.EmitConstraint.CENTER,
-        #     }
         'emit_constraint': {
-              'emit_type': caffe_pb2.EmitConstraint.MIN_OVERLAP,
-              'emit_overlap': 0.2,
-              }
+            'emit_type': caffe_pb2.EmitConstraint.CENTER,
+            }
         }
 test_transform_param = {
         'mean_value': [104, 117, 123],
@@ -254,7 +235,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('ssd_coco_part_finetune_clean_lbl_0.8')
+job_name = "{}".format('ssd_coco_part_finetune_ml_0.8')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -281,7 +262,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
 name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/modify_iter_250000.caffemodel"
+pretrain_model = "models/VGGNet/VGG_ssd_coco_origin_clean_iter_250000.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
 
@@ -400,7 +381,7 @@ solver_param = {
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 200000,
-    'snapshot': 10000,
+    'snapshot': 5000,
     'display': 100,
     'average_loss': 100,
     'type': "SGD",
@@ -410,7 +391,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 5000,
+    'test_interval': 20000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
@@ -421,7 +402,7 @@ det_out_param = {
     'num_classes': num_classes,
     'share_location': share_location,
     'background_label_id': background_label_id,
-    'nms_param': {'nms_threshold': 0.45, 'top_k': 200},
+    'nms_param': {'nms_threshold': 0.45, 'top_k': 400},
     'save_output_param': {
         'output_directory': output_result_dir,
         'output_name_prefix': "detections_minival_ssd512_results",
