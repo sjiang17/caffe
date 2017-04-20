@@ -1,7 +1,7 @@
 #ifndef CAFFE_DETECTION_OUTPUT_LAYER_HPP_
 #define CAFFE_DETECTION_OUTPUT_LAYER_HPP_
 
-#include <boost/property_tree/json_parser.hpp>
+//#include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/regex.hpp>
 
@@ -111,6 +111,13 @@ class DetectionOutputLayer : public Layer<Dtype> {
   Blob<Dtype> bbox_preds_;
   Blob<Dtype> bbox_permute_;
   Blob<Dtype> conf_permute_;
+
+  Blob<Dtype> clean_permute_;
+
+  float clean_score_threshold_;
+  float clean_nms_threshold_;
+  float clean_nms_conf_diff_;
+
 };
 
 }  // namespace caffe

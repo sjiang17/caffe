@@ -37,7 +37,7 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   // bottom[1] stores the confidence predictions.
   // bottom[2] stores the prior bounding boxes.
   // bottom[3] stores the ground truth bounding boxes.
-  virtual inline int ExactNumBottomBlobs() const { return 4; }
+  virtual inline int ExactNumBottomBlobs() const { return 5; } // ---- changed to 5
   virtual inline int ExactNumTopBlobs() const { return 1; }
 
  protected:
@@ -75,6 +75,16 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   // confidence loss.
   Blob<Dtype> conf_loss_;
 
+  //
+  shared_ptr<Layer<Dtype> > clean_loss_layer_;
+  //CleanLossType clean_loss_type_;
+  
+  vector<Blob<Dtype>*> clean_bottom_vec_;
+  vector<Blob<Dtype>*> clean_top_vec_;
+  Blob<Dtype> clean_pred_;
+  Blob<Dtype> clean_gt_;
+  Blob<Dtype> clean_loss_;
+
   MultiBoxLossParameter multibox_loss_param_;
   int num_classes_;
   bool share_location_;
@@ -92,6 +102,13 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   bool ignore_cross_boundary_bbox_;
   bool bp_inside_;
   MiningType mining_type_;
+  
+  float clean_weight_;
+  float gt_clean_thrshld_;
+  float cover_thrshld_predbygt_;
+  float cover_thrshld_gtbypred_max_;
+  float cover_thrshld_gtbypred_min_;
+
 
   int loc_classes_;
   int num_gt_;
@@ -102,6 +119,9 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   int num_conf_;
   vector<map<int, vector<int> > > all_match_indices_;
   vector<vector<int> > all_neg_indices_;
+
+  int num_clean_;
+  vector<vector<int> > all_clean_gt_indices_;
 
   // How to normalize the loss.
   LossParameter_NormalizationMode normalization_;

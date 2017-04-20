@@ -22,10 +22,12 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
   const Dtype* loc_data = bottom[0]->gpu_data();
   const Dtype* prior_data = bottom[2]->gpu_data();
   const int num = bottom[0]->num();
-
+  
+  //LOG(INFO)<<"inside output.cu";
+  
   // Decode predictions.
   Dtype* bbox_data = bbox_preds_.mutable_gpu_data();
-  const int loc_count = bbox_preds_.count();
+  const int loc_count = bbox_preds_.count(); // = 98624 = 24656*4
   const bool clip_bbox = false;
   DecodeBBoxesGPU<Dtype>(loc_count, loc_data, prior_data, code_type_,
       variance_encoded_in_target_, num_priors_, share_location_,
@@ -40,41 +42,56 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
   } else {
     bbox_cpu_data = bbox_preds_.cpu_data();
   }
-
+//LOG(INFO)<<"finished loc permute";
   // Retrieve all confidences.
   Dtype* conf_permute_data = conf_permute_.mutable_gpu_data();
   PermuteDataGPU<Dtype>(bottom[1]->count(), bottom[1]->gpu_data(),
       num_classes_, num_priors_, 1, conf_permute_data);
   const Dtype* conf_cpu_data = conf_permute_.cpu_data();
+//LOG(INFO)<<"finished conf permute";
+
+  // const Dtype* clean_data = bottom[3]->gpu_data();
+  
+  //LOG(INFO)<<"bottom[3]->count()"<<bottom[3]->count();
+  
+  Dtype* clean_permute_data = clean_permute_.mutable_gpu_data();
+  PermuteDataGPU<Dtype>(bottom[3]->count(), bottom[3]->gpu_data(), 1, num_priors_, 1, clean_permute_data);
+  const Dtype* clean_cpu_data = clean_permute_.cpu_data();
+  //LOG(INFO)<<"finished clean permute";
 
   int num_kept = 0;
-  vector<map<int, vector<int> > > all_indices;
+  vector<map<int, vector<int> > > all_indices; // (img id, (label, (   , prior id)))
   for (int i = 0; i < num; ++i) {
-    map<int, vector<int> > indices;
-    int num_det = 0;
+    map<int, vector<int> > indices; //(class id, (  ))
+    int num_det = 0; // num of all kept detections (after nms) of current img.
     const int conf_idx = i * num_classes_ * num_priors_;
     int bbox_idx;
     if (share_location_) {
-      bbox_idx = i * num_priors_ * 4;
+      bbox_idx = i * num_priors_ * 4; // start address of loc pred of current img
     } else {
       bbox_idx = conf_idx * 4;
     }
+    int clean_idx = i * num_priors_;
     for (int c = 0; c < num_classes_; ++c) {
       if (c == background_label_id_) {
         // Ignore background class.
         continue;
       }
-      const Dtype* cur_conf_data = conf_cpu_data + conf_idx + c * num_priors_;
-      const Dtype* cur_bbox_data = bbox_cpu_data + bbox_idx;
+      const Dtype* cur_conf_data = conf_cpu_data + conf_idx + c * num_priors_; //start address of current label
+      const Dtype* cur_bbox_data = bbox_cpu_data + bbox_idx; // address of current loc pred
+	  const Dtype* cur_clean_data = clean_cpu_data + clean_idx;
       if (!share_location_) {
         cur_bbox_data += c * num_priors_ * 4;
       }
-      ApplyNMSFast(cur_bbox_data, cur_conf_data, num_priors_,
-          confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c]));
-      num_det += indices[c].size();
+      //ApplyNMSFast(cur_bbox_data, cur_conf_data, num_priors_,
+      //    confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c])); // indices store the kept prior id for current label
+      ApplyCleanNMSFast(cur_bbox_data, cur_conf_data, num_priors_, confidence_threshold_, 
+						nms_threshold_, eta_, top_k_, &(indices[c]), cur_clean_data, 
+						clean_score_threshold_, clean_nms_threshold_, clean_nms_conf_diff_);
+	  num_det += indices[c].size();
     }
     if (keep_top_k_ > -1 && num_det > keep_top_k_) {
-      vector<pair<float, pair<int, int> > > score_index_pairs;
+      vector<pair<float, pair<int, int> > > score_index_pairs; //(score, (label, prior id))
       for (map<int, vector<int> >::iterator it = indices.begin();
            it != indices.end(); ++it) {
         int label = it->first;
@@ -87,11 +104,10 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
         }
       }
       // Keep top k results per image.
-      std::sort(score_index_pairs.begin(), score_index_pairs.end(),
-                SortScorePairDescend<pair<int, int> >);
+      std::sort(score_index_pairs.begin(), score_index_pairs.end(), SortScorePairDescend<pair<int, int> >);
       score_index_pairs.resize(keep_top_k_);
       // Store the new indices.
-      map<int, vector<int> > new_indices;
+      map<int, vector<int> > new_indices; //(label, (   , prior id))
       for (int j = 0; j < score_index_pairs.size(); ++j) {
         int label = score_index_pairs[j].second.first;
         int idx = score_index_pairs[j].second.second;
@@ -104,10 +120,10 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
       num_kept += num_det;
     }
   }
-
+  //LOG(INFO)<<"finished select boxes";
   vector<int> top_shape(2, 1);
   top_shape.push_back(num_kept);
-  top_shape.push_back(7);
+  top_shape.push_back(8); // 1*1*num_kept*8
   Dtype* top_data;
   if (num_kept == 0) {
     LOG(INFO) << "Couldn't find any detections";
@@ -118,7 +134,7 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
     // Generate fake results per image.
     for (int i = 0; i < num; ++i) {
       top_data[0] = i;
-      top_data += 7;
+      top_data += 8;
     }
   } else {
     top[0]->Reshape(top_shape);
@@ -128,47 +144,53 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
   int count = 0;
   boost::filesystem::path output_directory(output_directory_);
   for (int i = 0; i < num; ++i) {
-    const int conf_idx = i * num_classes_ * num_priors_;
-    int bbox_idx;
+    const int conf_idx = i * num_classes_ * num_priors_; // conf pred start address for current img
+    int bbox_idx; // loc pred start address for current img
+
+	int clean_idx = i * num_priors_;
+
     if (share_location_) {
       bbox_idx = i * num_priors_ * 4;
     } else {
       bbox_idx = conf_idx * 4;
     }
     for (map<int, vector<int> >::iterator it = all_indices[i].begin();
-         it != all_indices[i].end(); ++it) {
+         it != all_indices[i].end(); ++it) { // traverse all labels of current img.
       int label = it->first;
-      vector<int>& indices = it->second;
-      if (need_save_) {
+      vector<int>& indices = it->second; //(   , prior id)
+      if (need_save_) { //default true
         CHECK(label_to_name_.find(label) != label_to_name_.end())
           << "Cannot find label: " << label << " in the label map.";
         CHECK_LT(name_count_, names_.size());
       }
-      const Dtype* cur_conf_data =
-        conf_cpu_data + conf_idx + label * num_priors_;
+      const Dtype* cur_conf_data = conf_cpu_data + conf_idx + label * num_priors_; //conf start address of cur label
       const Dtype* cur_bbox_data = bbox_cpu_data + bbox_idx;
+	  
+	  const Dtype* cur_clean_data = clean_cpu_data + clean_idx;
+
       if (!share_location_) {
         cur_bbox_data += label * num_priors_ * 4;
       }
       for (int j = 0; j < indices.size(); ++j) {
-        int idx = indices[j];
-        top_data[count * 7] = i;
-        top_data[count * 7 + 1] = label;
-        top_data[count * 7 + 2] = cur_conf_data[idx];
+        int idx = indices[j]; // prior id
+        top_data[count * 8] = i;
+        top_data[count * 8 + 1] = label;
+        top_data[count * 8 + 2] = cur_conf_data[idx];
         for (int k = 0; k < 4; ++k) {
-          top_data[count * 7 + 3 + k] = cur_bbox_data[idx * 4 + k];
+          top_data[count * 8 + 3 + k] = cur_bbox_data[idx * 4 + k];
         }
+		top_data[count * 8 + 7] = cur_clean_data[idx];
         if (need_save_) {
           // Generate output bbox.
           NormalizedBBox bbox;
-          bbox.set_xmin(top_data[count * 7 + 3]);
-          bbox.set_ymin(top_data[count * 7 + 4]);
-          bbox.set_xmax(top_data[count * 7 + 5]);
-          bbox.set_ymax(top_data[count * 7 + 6]);
+          bbox.set_xmin(top_data[count * 8 + 3]);
+          bbox.set_ymin(top_data[count * 8 + 4]);
+          bbox.set_xmax(top_data[count * 8 + 5]);
+          bbox.set_ymax(top_data[count * 8 + 6]);
           NormalizedBBox out_bbox;
           OutputBBox(bbox, sizes_[name_count_], has_resize_, resize_param_,
                      &out_bbox);
-          float score = top_data[count * 7 + 2];
+          float score = top_data[count * 8 + 2];
           float xmin = out_bbox.xmin();
           float ymin = out_bbox.ymin();
           float xmax = out_bbox.xmax();
@@ -256,7 +278,7 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
           ptree output;
           output.add_child("detections", detections_);
           std::stringstream ss;
-          write_json(ss, output);
+          //write_json(ss, output);
           std::string rv = boost::regex_replace(ss.str(), exp, "$1");
           outfile << rv.substr(rv.find("["), rv.rfind("]") - rv.find("["))
               << std::endl << "]" << std::endl;
@@ -287,7 +309,7 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
         detections_.clear();
       }
     }
-  }
+  } // img num
   if (visualize_) {
 #ifdef USE_OPENCV
     vector<cv::Mat> cv_imgs;

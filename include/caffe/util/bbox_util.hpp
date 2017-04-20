@@ -137,11 +137,18 @@ void DecodeBBoxesAll(const vector<LabelBBox>& all_loc_pred,
     const bool clip, vector<LabelBBox>* all_decode_bboxes);
 
 // Match prediction bboxes with ground truth bboxes.
-void MatchBBox(const vector<NormalizedBBox>& gt,
-    const vector<NormalizedBBox>& pred_bboxes, const int label,
-    const MatchType match_type, const float overlap_threshold,
-    const bool ignore_cross_boundary_bbox,
-    vector<int>* match_indices, vector<float>* match_overlaps);
+void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
+	const vector<NormalizedBBox>& pred_bboxes, const int label,
+	const MatchType match_type, const float overlap_threshold,
+	const bool ignore_cross_boundary_bbox,
+	vector<int>* match_indices, vector<float>* match_overlaps,
+	const float cover_thrshld_predbygt, const float cover_thrshld_gtbypred_max,
+	const float cover_thrshld_gtbypred_min,
+	const vector<int> gt_clean, vector<int>* temp_extra_neg_indices,
+	map<int, int>* temp_extra_neg_match_indices);
+
+// Siyu
+void MarkCleanGtBBoxes(const vector < NormalizedBBox >& gt_bboxes, vector<int>* gt_clean, const float threshold);
 
 // Find matches between prediction bboxes and ground truth bboxes.
 //    all_loc_preds: stores the location prediction, where each item contains
@@ -158,7 +165,10 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
       const vector<vector<float> >& prior_variances,
       const MultiBoxLossParameter& multibox_loss_param,
       vector<map<int, vector<float> > >* all_match_overlaps,
-      vector<map<int, vector<int> > >* all_match_indices);
+      vector<map<int, vector<int> > >* all_match_indices,
+	  vector<vector<int> >* all_clean_gt_indices,
+	  vector<vector<int> >* all_temp_neg_indices,
+	  vector<map<int, int> >* all_extra_neg_match_indices);
 
 // Count the number of matches from the match indices.
 int CountNumMatches(const vector<map<int, vector<int> > >& all_match_indices,
@@ -183,6 +193,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
     const vector<vector<float> >& prior_variances,
     const vector<map<int, vector<float> > >& all_match_overlaps,
     const MultiBoxLossParameter& multibox_loss_param,
+	const vector<vector<int> >& all_temp_neg_indices,
     int* num_matches, int* num_negs,
     vector<map<int, vector<int> > >* all_match_indices,
     vector<vector<int> >* all_neg_indices);
@@ -330,6 +341,16 @@ void EncodeConfPrediction(const Dtype* conf_data, const int num,
       const map<int, vector<NormalizedBBox> >& all_gt_bboxes,
       Dtype* conf_pred_data, Dtype* conf_gt_data);
 
+//
+template <typename Dtype>
+void EncodeCleanPrediction(const Dtype* clean_data, const int num, const int num_priors,
+	const vector<map<int, vector<int> > >& all_match_indices,
+	const vector<vector<int> >& all_neg_indices,
+	const vector<vector<int> >& all_clean_gt_indices, 
+	const vector<map<int, int> >& all_extra_neg_match_indices,
+	Dtype* clean_pred_data, Dtype* clean_gt_data, const int num_clean);
+
+
 // Get prior bounding boxes from prior_data.
 //    prior_data: 1 x 2 x num_priors * 4 x 1 blob.
 //    num_priors: number of priors.
@@ -434,6 +455,19 @@ template <typename Dtype>
 void ApplyNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
       const float score_threshold, const float nms_threshold,
       const float eta, const int top_k, vector<int>* indices);
+
+template <typename Dtype> Dtype BoxCoverage(const Dtype* bbox1, const Dtype* bbox2);
+
+template <typename Dtype>
+void GetMaxAreaIndex(const Dtype* bboxes, const vector<int>& indices, 
+					 vector<pair<Dtype, int> >* area_index_vec);
+
+template <typename Dtype>
+void ApplyCleanNMSFast(const Dtype* bboxes, const Dtype* scores, const int num,
+	const float score_threshold, const float nms_threshold, const float eta,
+	const int top_k, vector<int>* indices,
+	const Dtype* clean_scores, const float clean_score_threshold, 
+	const float clean_nms_threshold, const float clean_nms_conf_diff);
 
 // Compute cumsum of a set of pairs.
 void CumSum(const vector<pair<float, int> >& pairs, vector<int>* cumsum);
