@@ -79,9 +79,9 @@ resume_training = False
 remove_old_models = False
 
 # The database file for training data. Created by data/coco/create_data.sh
-train_data = "/home/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
+train_data = "/data/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
 # The database file for testing data. Created by data/coco/create_data.sh
-test_data = "/home/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
+test_data = "/data/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
 # Specify the batch sampler.
 resize_width = 512
 resize_height = 512
@@ -235,7 +235,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('ssd_coco_part_finetune_ml_0.8')
+job_name = "{}".format('exp_coco_originlabel')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -260,11 +260,11 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
-name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
+name_size_file = "/data/siyu/dataset/coco/val2014-person-name-size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/VGG_ssd_coco_origin_clean_iter_250000.caffemodel"
+pretrain_model = "/data/siyu/ssd-dev/origin-ssd/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 # Stores LabelMapItem.
-label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
+label_map_file = "/data/siyu/dataset/coco/labelmap_coco-person.prototxt"
 
 # MultiBoxLoss parameters.
 num_classes = 2
@@ -280,7 +280,7 @@ loc_weight = (neg_pos_ratio + 1.) / 4.
 multibox_loss_param = {
     'loc_loss_type': P.MultiBoxLoss.SMOOTH_L1,
     'conf_loss_type': P.MultiBoxLoss.SOFTMAX,
-    'loc_weight': 1.375,
+    'loc_weight': loc_weight,
     'num_classes': num_classes,
     'share_location': share_location,
     'match_type': P.MultiBoxLoss.PER_PREDICTION,
@@ -295,9 +295,6 @@ multibox_loss_param = {
     'ignore_cross_boundary_bbox': ignore_cross_boundary_bbox,
     'clean_weight': 3.0,
     'gt_clean_thrshld': 0.7,
-    'cover_thrshld_predbygt': 0.7,
-    'cover_thrshld_gtbypred_max': 0.5,
-    'cover_thrshld_gtbypred_min': 0.0,
     }
 loss_param = {
     'normalization': normalization_mode,
@@ -365,7 +362,7 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image = 10000
+num_test_image = 5000
 test_batch_size = 2
 test_iter = num_test_image / test_batch_size
 
@@ -375,12 +372,12 @@ solver_param = {
     'weight_decay': 0.00005,
     'lr_policy': "multistep",
     # 'stepvalue': [280000, 360000, 400000],
-    'stepvalue': [100000, 150000],
+    'stepvalue': [150000, 200000],
     # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 200000,
+    'max_iter': 250000,
     'snapshot': 5000,
     'display': 100,
     'average_loss': 100,
@@ -391,7 +388,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 20000,
+    'test_interval': 25000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,

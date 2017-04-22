@@ -105,10 +105,6 @@ class MultiBoxLossLayer : public LossLayer<Dtype> {
   
   float clean_weight_;
   float gt_clean_thrshld_;
-  float cover_thrshld_predbygt_;
-  float cover_thrshld_gtbypred_max_;
-  float cover_thrshld_gtbypred_min_;
-
 
   int loc_classes_;
   int num_gt_;

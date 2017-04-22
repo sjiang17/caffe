@@ -142,10 +142,7 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
 	const MatchType match_type, const float overlap_threshold,
 	const bool ignore_cross_boundary_bbox,
 	vector<int>* match_indices, vector<float>* match_overlaps,
-	const float cover_thrshld_predbygt, const float cover_thrshld_gtbypred_max,
-	const float cover_thrshld_gtbypred_min,
-	const vector<int> gt_clean, vector<int>* temp_extra_neg_indices,
-	map<int, int>* temp_extra_neg_match_indices);
+	const vector<int> gt_clean);
 
 // Siyu
 void MarkCleanGtBBoxes(const vector < NormalizedBBox >& gt_bboxes, vector<int>* gt_clean, const float threshold);
@@ -166,9 +163,7 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
       const MultiBoxLossParameter& multibox_loss_param,
       vector<map<int, vector<float> > >* all_match_overlaps,
       vector<map<int, vector<int> > >* all_match_indices,
-	  vector<vector<int> >* all_clean_gt_indices,
-	  vector<vector<int> >* all_temp_neg_indices,
-	  vector<map<int, int> >* all_extra_neg_match_indices);
+	  vector<vector<int> >* all_clean_gt_indices);
 
 // Count the number of matches from the match indices.
 int CountNumMatches(const vector<map<int, vector<int> > >& all_match_indices,
@@ -193,7 +188,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
     const vector<vector<float> >& prior_variances,
     const vector<map<int, vector<float> > >& all_match_overlaps,
     const MultiBoxLossParameter& multibox_loss_param,
-	const vector<vector<int> >& all_temp_neg_indices,
     int* num_matches, int* num_negs,
     vector<map<int, vector<int> > >* all_match_indices,
     vector<vector<int> >* all_neg_indices);
@@ -346,8 +340,7 @@ template <typename Dtype>
 void EncodeCleanPrediction(const Dtype* clean_data, const int num, const int num_priors,
 	const vector<map<int, vector<int> > >& all_match_indices,
 	const vector<vector<int> >& all_neg_indices,
-	const vector<vector<int> >& all_clean_gt_indices, 
-	const vector<map<int, int> >& all_extra_neg_match_indices,
+	const vector<vector<int> >& all_clean_gt_indices,
 	Dtype* clean_pred_data, Dtype* clean_gt_data, const int num_clean);
 
 

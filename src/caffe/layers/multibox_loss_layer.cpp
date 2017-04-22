@@ -57,9 +57,6 @@ void MultiBoxLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
         << "Currently only support negative mining if share_location is true.";
   }
   gt_clean_thrshld_ = multibox_loss_param.gt_clean_thrshld();
-  cover_thrshld_predbygt_ = multibox_loss_param.cover_thrshld_predbygt();
-  cover_thrshld_gtbypred_max_ = multibox_loss_param.cover_thrshld_gtbypred_max();
-  cover_thrshld_gtbypred_min_ = multibox_loss_param.cover_thrshld_gtbypred_min();
   
   vector<int> loss_shape(1, 1);
   // Set up localization loss layer.
@@ -210,18 +207,15 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   // Find matches between source bboxes and ground truth bboxes.
   vector<map<int, vector<float> > > all_match_overlaps;
 
-  vector<vector<int> >all_extra_neg_indices; //To save the extra neg prior box index of all images. (img id, (  , prior id)
-  vector<map<int, int> >all_extra_neg_match_indices; //Save the matched gt id for neg priors. (img id, (prior id, gt id))
-  
   FindMatches(all_loc_preds, all_gt_bboxes, prior_bboxes, prior_variances,
 	  multibox_loss_param_, &all_match_overlaps, &all_match_indices_, 
-	  &all_clean_gt_indices_, &all_extra_neg_indices, &all_extra_neg_match_indices);
+	  &all_clean_gt_indices_);
   //LOG(INFO) << "all_temp_neg_indices.size :" << all_temp_neg_indices[1].size();
   num_matches_ = 0;
   int num_negs = 0;
   // Sample hard negative (and positive) examples based on mining type.
   MineHardExamples(*bottom[1], all_loc_preds, all_gt_bboxes, prior_bboxes,
-				   prior_variances, all_match_overlaps, multibox_loss_param_, all_extra_neg_indices,
+				   prior_variances, all_match_overlaps, multibox_loss_param_,
                    &num_matches_, &num_negs, &all_match_indices_,
                    &all_neg_indices_);
 
@@ -309,7 +303,7 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 	  Dtype* clean_pred_data = clean_pred_.mutable_cpu_data();
 	  Dtype* clean_gt_data = clean_gt_.mutable_cpu_data();
 	  EncodeCleanPrediction(clean_data, num_, num_priors_, all_match_indices_,
-		  all_neg_indices_, all_clean_gt_indices_, all_extra_neg_match_indices,
+		  all_neg_indices_, all_clean_gt_indices_,
 		  clean_pred_data, clean_gt_data, num_clean_);
 	  clean_loss_layer_->Reshape(clean_bottom_vec_, clean_top_vec_);
 	  clean_loss_layer_->Forward(clean_bottom_vec_, clean_top_vec_);

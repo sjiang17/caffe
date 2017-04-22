@@ -1325,9 +1325,6 @@ message MultiBoxLossParameter {
   optional bool use_prior_for_nms = 23 [default = false];
   optional float clean_weight = 24 [default = 1.0];
   optional float gt_clean_thrshld = 25 [default = 0.7];
-  optional float cover_thrshld_predbygt = 26 [default = 0.7];
-  optional float cover_thrshld_gtbypred_max = 27 [default = 0.5];
-  optional float cover_thrshld_gtbypred_min = 28 [default = 0.0];
 }
 
 message MVNParameter {
