@@ -74,14 +74,14 @@ caffe_root = os.getcwd()
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
 # Otherwise, we will load from the pretrain_model defined below.
-resume_training = False
+resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
 
 # The database file for training data. Created by data/coco/create_data.sh
-train_data = "/data/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
+train_data = "/home/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
 # The database file for testing data. Created by data/coco/create_data.sh
-test_data = "/data/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
+test_data = "/home/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
 # Specify the batch sampler.
 resize_width = 512
 resize_height = 512
@@ -260,11 +260,11 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
-name_size_file = "/data/siyu/dataset/coco/val2014-person-name-size.txt"
+name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "/data/siyu/ssd-dev/origin-ssd/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+pretrain_model = "/home/siyu/ssd-dev/origin-ssd/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 # Stores LabelMapItem.
-label_map_file = "/data/siyu/dataset/coco/labelmap_coco-person.prototxt"
+label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
 
 # MultiBoxLoss parameters.
 num_classes = 2
@@ -335,7 +335,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0,1"
+gpus = "0,2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
