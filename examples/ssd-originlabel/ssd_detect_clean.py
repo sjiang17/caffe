@@ -25,7 +25,7 @@ caffe.set_mode_gpu()
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2
 
-voc_labelmap_file = '/data/siyu/dataset/coco/labelmap_coco-person.prototxt'
+voc_labelmap_file = '/home/siyu/dataset/coco/labelmap_coco-person.prototxt'
 file = open(voc_labelmap_file, 'r')
 voc_labelmap = caffe_pb2.LabelMap()
 text_format.Merge(str(file.read()), voc_labelmap)
@@ -46,8 +46,8 @@ def get_labelname(labelmap, labels):
     return labelnames
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-model_def = '/data/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_clean_0.8/deploy.prototxt'
-model_weights = '/data/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_clean_0.8/VGG_ssd_coco_part_clean_0.8_iter_300000.caffemodel'
+model_def = '/home/siyu/ssd-dev/originlabel-ssd/jobs/VGGNet/exp_coco_finetune_pl/deploy.prototxt'
+model_weights = '/home/siyu/ssd-dev/originlabel-ssd/models/VGGNet/exp_coco_finetune_pl/VGG_exp_coco_finetune_pl_iter_160000.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -63,8 +63,9 @@ transformer.set_channel_swap('data', (2,1,0))  # the reference model has channel
 image_resize = 512
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/data/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/data/siyu/detection_results/coco/ssd_coco_part_clean_0.8_300k'
+data_root_path = '/home/siyu/dataset/coco/Val2014/Crop_JPEGImages'
+result_root_path = '/home/siyu/detection_results/coco/exp_crop_coco'
+result_name = 'exp_crop_coco_finetune_pl_160k_0.5_0.2'
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
@@ -196,7 +197,7 @@ for image_path in images:
 
 # print json_result
 json_final = json.dumps(json_result, sort_keys=False, separators=(',',':'))
-f_json = open(os.path.join(result_root_path, 'result.json'), 'w')
+f_json = open(os.path.join(result_root_path, 'result_{}.json'.format(result_name)), 'w')
 f_json.write(json_final)
 f_json.close()
 
