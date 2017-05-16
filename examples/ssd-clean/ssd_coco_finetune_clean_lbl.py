@@ -74,7 +74,7 @@ caffe_root = os.getcwd()
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
 # Otherwise, we will load from the pretrain_model defined below.
-resume_training = False
+resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
 
@@ -254,7 +254,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('ssd_coco_part_finetune_clean_lbl_0.8')
+job_name = "{}".format('exp_coco_finetune_pml_0.8')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -281,7 +281,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
 name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/modify_iter_250000.caffemodel"
+pretrain_model = "models/VGGNet/VGG_ssd_coco_origin_clean_long_iter_250000.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
 
@@ -357,7 +357,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0,1"
+gpus = "0,2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
@@ -384,7 +384,7 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image = 10000
+num_test_image = 5000
 test_batch_size = 2
 test_iter = num_test_image / test_batch_size
 
@@ -400,7 +400,7 @@ solver_param = {
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 200000,
-    'snapshot': 10000,
+    'snapshot': 5000,
     'display': 100,
     'average_loss': 100,
     'type': "SGD",
@@ -410,7 +410,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 5000,
+    'test_interval': 25000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
@@ -421,7 +421,7 @@ det_out_param = {
     'num_classes': num_classes,
     'share_location': share_location,
     'background_label_id': background_label_id,
-    'nms_param': {'nms_threshold': 0.45, 'top_k': 200},
+    'nms_param': {'nms_threshold': 0.45, 'top_k': 400},
     'save_output_param': {
         'output_directory': output_result_dir,
         'output_name_prefix': "detections_minival_ssd512_results",

@@ -45,14 +45,12 @@ def get_labelname(labelmap, labels):
         assert found == True
     return labelnames
 
-result_names = ['400_ssd_coco_finetune_clean_lbl_0.8_160k', '400_ssd_coco_finetune_clean_lbl_0.8_180k']
-model_weights_list = ['/home/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/VGG_ssd_coco_part_finetune_clean_lbl_0.8_iter_160000.caffemodel',
-                        '/home/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/VGG_ssd_coco_part_finetune_clean_lbl_0.8_iter_180000.caffemodel']
-                        
+result_names = ['exp_coco_finetune_pml_0.8_160k_0.5_0.2']
+model_weights_list = ['/home/siyu/ssd-dev/clean-ssd/models/VGGNet/exp_coco_finetune_pml_0.8/VGG_exp_coco_finetune_pml_0.8_iter_160000.caffemodel']                       
 for idx, result_name in enumerate(result_names):
 
     # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-    model_def = '/home/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/deploy.prototxt'
+    model_def = '/home/siyu/ssd-dev/clean-ssd/jobs/VGGNet/exp_coco_finetune_pml_0.8/deploy.prototxt'
     # model_weights = '/home/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/VGG_ssd_coco_part_finetune_clean_lbl_0.8_iter_120000.caffemodel'
     model_weights = model_weights_list[idx]
 
@@ -71,7 +69,7 @@ for idx, result_name in enumerate(result_names):
     net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
     data_root_path = '/home/siyu/dataset/coco/Val2014/JPEGImages'
-    result_root_path = '/home/siyu/detection_results/coco/ssd_coco_part_finetune_clean_lbl_0.8'
+    result_root_path = '/home/siyu/detection_results/coco/exp_coco_finetune_pml_0.5_vis_0.2'
     # subdirs = os.listdir(data_root_path)
 
     if not os.path.isdir(result_root_path):
@@ -163,7 +161,7 @@ for idx, result_name in enumerate(result_names):
                 ymax = int(round(top_ymax[i] * image.shape[0]))
                     
                 label = top_labels[i]
-                name = 's%.2f c%.2f'%(score, clean)
+                name = 'score%.2f inst_num%.2f'%(score, clean)
                 coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
                 # color = colors[i % len(colors)]
                 color = (random.random(), random.random(), random.random())
