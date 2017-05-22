@@ -84,7 +84,7 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
         cur_bbox_data += c * num_priors_ * 4;
       }
       //ApplyNMSFast(cur_bbox_data, cur_conf_data, num_priors_,
-      //    confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c])); // indices store the kept prior id for current label
+        //  confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c])); // indices store the kept prior id for current label
       ApplyCleanNMSFast(cur_bbox_data, cur_conf_data, num_priors_, confidence_threshold_, 
 						nms_threshold_, eta_, top_k_, &(indices[c]), cur_clean_data, 
 						clean_score_threshold_, clean_nms_threshold_, clean_nms_conf_diff_);

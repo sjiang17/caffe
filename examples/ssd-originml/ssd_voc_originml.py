@@ -86,7 +86,6 @@ test_data = "/home/siyu/dataset/voc/lmdb/VOC0712_val_lmdb"
 resize_width = 300
 resize_height = 300
 resize = "{}x{}".format(resize_width, resize_height)
-part_sampler_prob = 0.0
 batch_sampler = [
         {
                 'sampler': {
@@ -442,7 +441,7 @@ make_if_not_exist(snapshot_dir)
 net = caffe.NetSpec()
 net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
-        transform_param=train_transform_param, batch_sampler=batch_sampler, part_sampler_prob=part_sampler_prob)
+        transform_param=train_transform_param, batch_sampler=batch_sampler)
 
 VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
     dropout=False)
