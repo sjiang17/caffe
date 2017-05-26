@@ -121,6 +121,7 @@ void DetectionOutputLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   clean_score_threshold_ = detection_output_param.clean_score_threshold();
   clean_nms_threshold_ = detection_output_param.clean_nms_threshold();
   clean_nms_conf_diff_ = detection_output_param.clean_nms_conf_diff();
+  use_clean_nms_ = detection_output_param.use_clean_nms();
 
   bbox_preds_.ReshapeLike(*(bottom[0]));
   if (!share_location_) {

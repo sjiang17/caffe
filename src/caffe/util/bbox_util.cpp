@@ -783,6 +783,9 @@ void MarkCleanGtBBoxes(const vector < NormalizedBBox >& gt_bboxes, vector<int>* 
 			if (i == j){
 				continue;
 			}
+			if (gt_bboxes[i].label() != gt_bboxes[j].label()){
+				continue;
+			}
 			float gt_coverage = BBoxCoverage(gt_bboxes[j], gt_bboxes[i]); // the coverage of box j by box i
 			if (gt_coverage > threshold){
 				(*gt_clean)[i] = 1;
@@ -1056,9 +1059,9 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
 	//------------
 	set<int> extra_sel_indices;
 
-    for (map<int, vector<int> >::iterator it = match_indices.begin();
-         it != match_indices.end(); ++it) {
+    for (map<int, vector<int> >::iterator it = match_indices.begin(); it != match_indices.end(); ++it) {
       const int label = it->first;
+	  //LOG(INFO) << "Label: " << label;
       int num_sel = 0;
       // Get potential indices and loss pairs.
       vector<pair<float, int> > loss_indices;

@@ -1044,6 +1044,7 @@ message DetectionOutputParameter {
   optional float clean_score_threshold = 13 [default = 0.5];
   optional float clean_nms_threshold = 14 [default = 0.01];
   optional float clean_nms_conf_diff = 15 [default = 0.0];
+  optional bool use_clean_nms = 16 [default = false];
 }
 
 message DropoutParameter {

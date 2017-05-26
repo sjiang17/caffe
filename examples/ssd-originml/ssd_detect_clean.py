@@ -25,7 +25,7 @@ caffe.set_mode_gpu()
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2
 
-voc_labelmap_file = '/home/siyu/dataset/voc/labelmap_voc_person.prototxt'
+voc_labelmap_file = '/home/siyu/dataset/voc_all/labelmap_voc.prototxt'
 file = open(voc_labelmap_file, 'r')
 voc_labelmap = caffe_pb2.LabelMap()
 text_format.Merge(str(file.read()), voc_labelmap)
@@ -46,9 +46,9 @@ def get_labelname(labelmap, labels):
     return labelnames
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-model_def = '/home/siyu/ssd-dev/originml-ssd/jobs/VGGNet/ssd_voc_origin_ml/deploy.prototxt'
-model_weights = '/home/siyu/ssd-dev/originml-ssd/models/VGGNet/ssd_voc_origin_ml/VGG_ssd_voc_origin_ml_iter_100000.caffemodel'
-result_name = 'exp_voc_crop_origin_ml_100k_0.5_0.4'
+model_def = '/home/siyu/ssd-dev/multiclass-ssd/jobs/VGGNet/voc_all_originml2/deploy.prototxt'
+model_weights = '/home/siyu/ssd-dev/multiclass-ssd/models/VGGNet/voc_all_originml2/VGG_voc_all_originml2_iter_120000.caffemodel'
+result_name = 'voc_all_originml_w3_120k'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -64,15 +64,15 @@ transformer.set_channel_swap('data', (2,1,0))  # the reference model has channel
 image_resize = 300
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/home/siyu/dataset/voc/Val/Crop_JPEGImages'
-result_root_path = '/home/siyu/detection_results/voc/exp_voc_crop'
+data_root_path = '/home/siyu/dataset/voc_all/val/JPEGImages'
+result_root_path = '/home/siyu/detection_results/voc_all/' + result_name
 
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
     os.makedirs(result_root_path)
 
-voc_result_file = open('{}/{}.txt'.format(result_root_path, result_name), 'w')
+# voc_result_file = open('{}/{}.txt'.format(result_root_path, result_name), 'w')
 
 # for s in range(len(subdirs)):
 # mat_result_path = os.path.join(result_root_path, subdirs[s])
@@ -98,9 +98,11 @@ total_time = 0
 
 json_result = list()
 
-for image_path in image_list:
+all_boxes = [[[] for _ in xrange(len(image_list))] for _ in xrange(21)]
+
+for img_ind, image_path in enumerate(image_list):
     # draw = (cnt % 100 == 0)
-    draw = False
+    draw = True
 
     if cnt % 1000 == 0:
         print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), ("finished %d images" % cnt)
@@ -136,8 +138,6 @@ for image_path in image_list:
     det_clean = detections[0,0,:,7]
     # det_prob = detections[0,0,:,8:39]
 
-    # print detections.shape
-
     # Get detections with confidence higher than 0.6.
     top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.01]
     # print top_indices
@@ -167,7 +167,7 @@ for image_path in image_list:
             ymax = int(round(top_ymax[i] * image.shape[0]))
                 
             label = top_labels[i]
-            name = 's%.2f c%.2f'%(score, clean)
+            name = '%s s%.2f c%.2f'%(label, score, clean)
             coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
             # color = colors[i % len(colors)]
             color = (random.random(), random.random(), random.random())
@@ -188,25 +188,42 @@ for image_path in image_list:
         ymax_res = round(top_ymax[i] * image.shape[0], 2)
         w_res = round(top_xmax[i] * image.shape[1] - top_xmin[i] * image.shape[1], 2)
         h_res = round(top_ymax[i] * image.shape[0] - top_ymin[i] * image.shape[0], 2)
+        
+        cat_ind = int(top_label_indices[i])
+        score_res = round(score, 4)
+        clean_res = round(clean, 3)
+        
+        cur_box = [score_res, x_res, y_res, xmax_res, ymax_res, clean_res, json_img_id]
+        all_boxes[cat_ind][img_ind].append(cur_box)
 
-        json_cat_id = int(top_label_indices[i])
         json_bbox = [x_res, y_res, w_res, h_res]
-        json_score = round(score, 4)
-        json_clean = round(clean, 3)
-
-        json_per_result = [{"image_id": json_img_id, "category_id": json_cat_id, \
-                            "bbox": json_bbox, "score": json_score, "clean": json_clean}]
+        json_per_result = [{"image_id": json_img_id, "category_id": cat_ind, \
+                            "bbox": json_bbox, "score": score_res, "clean": clean_res}]
         json_result += json_per_result
 
-        voc_result_line = '{} {} {} {} {} {}\n'.format(json_img_id, json_score, x_res, y_res, xmax_res, ymax_res)
-        voc_result_file.write(voc_result_line)
+        # voc_result_line = '{} {} {} {} {} {}\n'.format(json_img_id, json_score, x_res, y_res, xmax_res, ymax_res)
+        # voc_result_file.write(voc_result_line)
 
     if draw:
         save_result_path = os.path.join(os.path.join(result_root_path, os.path.basename(image_path)))
         plt.savefig(save_result_path, bbox_inches='tight', pad_inches=0)
         plt.close()
 
-voc_result_file.close()
+for cat_ind in xrange(21):
+    cat_name = get_labelname(voc_labelmap, cat_ind)[0]
+    print cat_name
+    if cat_name == 'background':
+        continue
+    voc_result_file = open('{}/{}_{}.txt'.format(result_root_path, result_name, cat_name), 'w')
+    for img_ind, image_path in enumerate(image_list):
+        image_name = image_path.split('.jpg')[0]
+        dets = all_boxes[cat_ind][img_ind]
+        if dets == []:
+            continue
+        for k in xrange(len(dets)):
+            assert dets[k][6] == image_name
+            voc_result_file.write('{} {} {} {} {} {}\n'.format(image_name, dets[k][0], dets[k][1], dets[k][2], dets[k][3], dets[k][4]))
+    voc_result_file.close()
 
 # print json_result
 json_final = json.dumps(json_result, sort_keys=False, separators=(',',':'))
