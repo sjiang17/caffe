@@ -86,7 +86,23 @@ test_data = "/home/siyu/dataset/voc_all/lmdb/voc_all_val_lmdb"
 resize_width = 300
 resize_height = 300
 resize = "{}x{}".format(resize_width, resize_height)
+part_sampler_prob = 0.8
 batch_sampler = [
+        {
+                'sampler_type': 1,
+                'sampler': {
+                        'min_scale': 0.2,
+                        'max_scale': 0.6,
+                        'min_aspect_ratio': 0.5,
+                        'max_aspect_ratio': 2.0,
+                },
+                'sample_constraint':{
+                        'min_object_coverage': 0.2,
+                        'max_object_coverage': 0.5,
+                },
+                'max_trials': 100,
+                'max_sample': 1,
+        },
         {
                 'sampler': {
                         },
@@ -207,7 +223,8 @@ train_transform_param = {
                 'max_expand_ratio': 4.0,
                 },
         'emit_constraint': {
-              'emit_type': caffe_pb2.EmitConstraint.CENTER,
+              'emit_type': caffe_pb2.EmitConstraint.MIN_OVERLAP,
+              'emit_overlap': 0.2,
               }
         }
 test_transform_param = {
@@ -234,7 +251,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('voc_all_originml2')
+job_name = "{}".format('voc_all_finetune_pml')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -261,7 +278,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
 name_size_file = "/home/siyu/dataset/voc_all/val_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "/home/siyu/ssd-dev/caffe/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+pretrain_model = "models/VGGNet/VGG_voc_all_originml2_iter_120000.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "/home/siyu/dataset/voc_all/labelmap_voc.prototxt"
 
@@ -373,12 +390,12 @@ solver_param = {
     'base_lr': 0.001,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [80000, 100000, 120000],
+    'stepvalue': [50000, 70000, 80000],
     # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 120000,
+    'max_iter': 80000,
     'snapshot': 5000,
     'display': 100,
     'average_loss': 100,
