@@ -153,7 +153,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     AnnotatedDatum distort_datum;
     AnnotatedDatum* expand_datum = NULL;
 
-	vector<float> origin_coord(4, 0);
+	//vector<float> origin_coord(4, 0); // used to limit the cropping area. Abandoned.
 	float prob_thrshld = anno_data_param.part_sampler_prob();
 	bool is_sampler_part = false;
 	if (prob_thrshld > 1e-6){
@@ -193,7 +193,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       // Generate sampled bboxes from expand_datum.
 	  if (is_sampler_part){
 		  vector<NormalizedBBox> sampled_part_bboxes;
-		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes/*, origin_coord*/);
+		  GenerateBatchSamples_Part(*expand_datum, batch_samplers_, &sampled_part_bboxes);
 		  if (sampled_part_bboxes.size() > 0){
 			  //LOG(INFO) << "sampled part bboxes ------";
 			  sampled_datum = new AnnotatedDatum();
