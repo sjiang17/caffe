@@ -25,7 +25,7 @@ caffe.set_mode_gpu()
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2
 
-voc_labelmap_file = '/data/siyu/dataset/coco/labelmap_coco-person.prototxt'
+voc_labelmap_file = '/home/siyu/dataset/voc/labelmap_voc_person.prototxt'
 file = open(voc_labelmap_file, 'r')
 voc_labelmap = caffe_pb2.LabelMap()
 text_format.Merge(str(file.read()), voc_labelmap)
@@ -46,8 +46,9 @@ def get_labelname(labelmap, labels):
     return labelnames
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
-model_def = '/data/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_clean_0.8/deploy.prototxt'
-model_weights = '/data/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_clean_0.8/VGG_ssd_coco_part_clean_0.8_iter_300000.caffemodel'
+model_def = '/home/siyu/ssd-dev/clean-ssd/jobs/VGGNet/exp_voc_finetune_pml_0.8/deploy.prototxt'
+model_weights = '/home/siyu/ssd-dev/clean-ssd/models/VGGNet/exp_voc_finetune_pml_0.8/VGG_exp_voc_finetune_pml_0.8_iter_60000.caffemodel'
+result_name = 'exp_crop_voc_finetune_pml_60k_0.5_0.4'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -60,43 +61,53 @@ transformer.set_mean('data', np.array([104,117,123])) # mean pixel
 transformer.set_raw_scale('data', 255)  # the reference model operates on images in [0,255] range instead of [0,1]
 transformer.set_channel_swap('data', (2,1,0))  # the reference model has channels in BGR order instead of RGB
 
-image_resize = 512
+image_resize = 300
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/data/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/data/siyu/detection_results/coco/ssd_coco_part_clean_0.8_300k'
+data_root_path = '/home/siyu/dataset/voc/Val/JPEGImages'
+result_root_path = '/home/siyu/detection_results/voc/exp_crop_voc'
+
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
     os.makedirs(result_root_path)
 
+voc_result_file = open('{}/{}.txt'.format(result_root_path, result_name), 'w')
+
 # for s in range(len(subdirs)):
 # mat_result_path = os.path.join(result_root_path, subdirs[s])
-mat_result_path = result_root_path
-mat_result_path = os.path.join(mat_result_path, 'video_result.pkl')
+# mat_result_path = result_root_path
+# mat_result_path = os.path.join(mat_result_path, 'video_result.pkl')
 
 # if not os.path.isdir(os.path.join(result_root_path, subdirs[s])):
 #     os.mkdir(os.path.join(result_root_path, subdirs[s]))
 
 
-images = glob.glob(os.path.join(data_root_path, '*.jpg'))
+# images = glob.glob(os.path.join(data_root_path, '*.jpg'))
 #video_detections = [0]*len(images)
+
+image_list = sorted([f for f in os.listdir(data_root_path) if f.endswith('.jpg')])
+video_detections = []
+cnt = 0 
+total_time = 0
+json_result = list()
+
 video_detections = []
 cnt = 0 
 total_time = 0
 
 json_result = list()
 
-for image_path in images:
+for image_path in image_list:
     # draw = (cnt % 100 == 0)
     draw = False
 
     if cnt % 1000 == 0:
         print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), ("finished %d images" % cnt)
 
-    json_img_id = int(image_path.split("COCO_val2014_")[1].split(".jpg")[0])
+    json_img_id = image_path.split(".jpg")[0]
 
-    image = caffe.io.load_image(image_path)
+    image = caffe.io.load_image(os.path.join(data_root_path, image_path))
     
     start = time.clock()
     
@@ -149,7 +160,7 @@ for image_path in images:
         score = top_conf[i]
         clean = top_clean[i]
 
-        if draw and score >= 0.2:
+        if draw and score >= 0.02:
             xmin = int(round(top_xmin[i] * image.shape[1]))
             ymin = int(round(top_ymin[i] * image.shape[0]))
             xmax = int(round(top_xmax[i] * image.shape[1]))
@@ -173,30 +184,33 @@ for image_path in images:
 
         x_res = round(top_xmin[i] * image.shape[1], 2)
         y_res = round(top_ymin[i] * image.shape[0], 2)
+        xmax_res = round(top_xmax[i] * image.shape[1], 2)
+        ymax_res = round(top_ymax[i] * image.shape[0], 2)
         w_res = round(top_xmax[i] * image.shape[1] - top_xmin[i] * image.shape[1], 2)
         h_res = round(top_ymax[i] * image.shape[0] - top_ymin[i] * image.shape[0], 2)
 
         json_cat_id = int(top_label_indices[i])
         json_bbox = [x_res, y_res, w_res, h_res]
-        json_score = round(score, 3)
+        json_score = round(score, 4)
         json_clean = round(clean, 3)
 
         json_per_result = [{"image_id": json_img_id, "category_id": json_cat_id, \
                             "bbox": json_bbox, "score": json_score, "clean": json_clean}]
         json_result += json_per_result
 
+        voc_result_line = '{} {} {} {} {} {}\n'.format(json_img_id, json_score, x_res, y_res, xmax_res, ymax_res)
+        voc_result_file.write(voc_result_line)
+
     if draw:
         save_result_path = os.path.join(os.path.join(result_root_path, os.path.basename(image_path)))
         plt.savefig(save_result_path, bbox_inches='tight', pad_inches=0)
         plt.close()
 
-# f = open(mat_result_path, 'w')
-# cPickle.dump(video_detections, f)
-# f.close()
+voc_result_file.close()
 
 # print json_result
 json_final = json.dumps(json_result, sort_keys=False, separators=(',',':'))
-f_json = open(os.path.join(result_root_path, 'result.json'), 'w')
+f_json = open(os.path.join(result_root_path, 'result_{}.json'.format(result_name)), 'w')
 f_json.write(json_final)
 f_json.close()
 

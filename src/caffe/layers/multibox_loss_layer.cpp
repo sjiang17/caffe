@@ -28,7 +28,6 @@ void MultiBoxLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Get other parameters.
   CHECK(multibox_loss_param.has_num_classes()) << "Must provide num_classes.";
   num_classes_ = multibox_loss_param.num_classes();
-  //LOG(INFO) << "===================================num_classes_ " << num_classes_;
   CHECK_GE(num_classes_, 1) << "num_classes should not be less than 1.";
   share_location_ = multibox_loss_param.share_location();
   loc_classes_ = share_location_ ? 1 : num_classes_;
@@ -51,7 +50,6 @@ void MultiBoxLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   } else {
     normalization_ = this->layer_param_.loss_param().normalization();
   }
-  //LOG(INFO) << "--------------------------normalization: " << normalization_;
   if (do_neg_mining_) {
     CHECK(share_location_)
         << "Currently only support negative mining if share_location is true.";
@@ -154,14 +152,6 @@ void MultiBoxLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   clean_loss_layer_ = LayerRegistry<Dtype>::CreateLayer(layer_param);
   clean_loss_layer_->SetUp(clean_bottom_vec_, clean_top_vec_);
-
-  //SoftmaxParameter* softmax_param = layer_param.mutable_softmax_param();
-  //softmax_param->set_axis(1);
-  //vector<int> clean_shape(1, 1);
-  //clean_shape.push_back(1);
-  //clean_gt_.Reshape(clean_shape); // 1 * 1
-  //clean_pred_.Reshape(clean_shape);  //1 * 1
-
 }
 
 template <typename Dtype>
@@ -172,8 +162,6 @@ void MultiBoxLossLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   num_priors_ = bottom[2]->height() / 4;
   num_gt_ = bottom[3]->height();
   CHECK_EQ(bottom[0]->num(), bottom[1]->num());
-  //LOG(INFO) << "num_priors_ " << num_priors_;
-  //LOG(INFO) << "loc_classes_ " << loc_classes_;
   CHECK_EQ(num_priors_ * loc_classes_ * 4, bottom[0]->channels())
       << "Number of priors must match number of location predictions.";
   CHECK_EQ(num_priors_ * num_classes_, bottom[1]->channels())
@@ -189,8 +177,6 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* gt_data = bottom[3]->cpu_data();
   const Dtype* clean_data = bottom[4]->cpu_data();
 
-  //LOG(INFO) << "==============================";
-  //LOG(INFO) << "--------clean_weight_: " << clean_weight_;
   // Retrieve all ground truth.
   map<int, vector<NormalizedBBox> > all_gt_bboxes;
   GetGroundTruth(gt_data, num_gt_, background_label_id_, use_difficult_gt_,
@@ -267,12 +253,6 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       LOG(FATAL) << "Unknown confidence loss type.";
     }
 
-	/*LOG(INFO) << "conf n: " << conf_pred_.num();
-	LOG(INFO) << "c: " << conf_pred_.channels();
-	LOG(INFO) << "h: " << conf_pred_.height();
-	LOG(INFO) << "w: " << conf_pred_.width();
-	LOG(INFO) << "shape: " << conf_pred_.shape(0);*/
-
     if (!do_neg_mining_) {
       // Consider all scores.
       // Share data and diff with bottom[1].
@@ -291,15 +271,11 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     conf_loss_.mutable_cpu_data()[0] = 0;
   }
 
-  //LOG(INFO) << "finished conf loss layer";
-
   // to clean_loss_layer_
 
   num_clean_ = num_matches_;
-  //LOG(INFO) << "num_clean_: " << num_clean_;
+
   if (num_clean_ >= 1){
-	  
-	  //CHECK_EQ(num_clean_, num_conf_);
 	  vector<int> clean_shape(2);
 	  clean_shape[0] = 1; // num_clean_;
 	  clean_shape[1] = num_clean_;
@@ -318,42 +294,29 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 	  clean_loss_.mutable_cpu_data()[0] = 0;
   }
 
-  //LOG(INFO) << "finished clean loss layer";
-
   top[0]->mutable_cpu_data()[0] = 0;
   if (this->layer_param_.propagate_down(0)) {
     Dtype normalizer = LossLayer<Dtype>::GetNormalizer(
         normalization_, num_, num_priors_, num_matches_);
     top[0]->mutable_cpu_data()[0] +=
         loc_weight_ * loc_loss_.cpu_data()[0] / normalizer;
-	//LOG(INFO) << "loc loss: " << loc_loss_.cpu_data()[0] * loc_weight_;
   }
   if (this->layer_param_.propagate_down(1)) {
     Dtype normalizer = LossLayer<Dtype>::GetNormalizer(
         normalization_, num_, num_priors_, num_matches_);
     top[0]->mutable_cpu_data()[0] += conf_loss_.cpu_data()[0] / normalizer;
-	//LOG(INFO) << "conf loss: " << conf_loss_.cpu_data()[0];
   }
-
-  //LOG(INFO) << "finished forward propagate_down 1";
-
-  //
   if (this->layer_param_.propagate_down(4)){
 	  Dtype normalizer = LossLayer<Dtype>::GetNormalizer(
 		  normalization_, num_, num_priors_, num_matches_);
 	  top[0]->mutable_cpu_data()[0] += clean_weight_ * clean_loss_.cpu_data()[0] / normalizer;
-	  //LOG(INFO) << "clean loss: " << clean_loss_.cpu_data()[0] * clean_weight_;
   }
-  //LOG(INFO) << "finished forward propagate_down 4";
-  //LOG(INFO) << "---all loss: " << top[0]->mutable_cpu_data()[0];
 }
 
 template <typename Dtype>
 void MultiBoxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-  
-  //LOG(INFO) << "++++backward_cpu++++";
 
   if (propagate_down[2]) {
     LOG(FATAL) << this->type()
@@ -490,18 +453,10 @@ void MultiBoxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 					  count++;
 				  }
 			  }
-
-			  /*for (int n = 0; n < all_neg_indices_[i].size(); n++){
-				  int j = all_neg_indices_[i][n];
-				  caffe_copy(1, clean_pred_diff + count * 1, clean_bottom_diff + j * 1);
-				  count++;
-			  }*/
 			  clean_bottom_diff += bottom[4]->offset(1); //Set the blob's offset to 1. Meaning move to next image.
 		  }
 	  }
   }
-  //LOG(INFO) << "finished backward propagate_down 4";
-  //LOG(INFO) << "------------------------";
   // After backward, remove match statistics.
   all_match_indices_.clear();
   all_neg_indices_.clear();

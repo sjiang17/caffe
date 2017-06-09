@@ -592,8 +592,6 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
 	const vector<int> gt_clean, vector<int>* temp_extra_neg_indices,
 	map<int, int>* temp_extra_neg_match_indices) {
 
-	//LOG(INFO) << "inside MatchBBox!";
-
   int num_pred = pred_bboxes.size();
   match_indices->clear();
   match_indices->resize(num_pred, -1);
@@ -831,7 +829,6 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
   // Find the matches.
   int num = all_loc_preds.size(); // number of images in a batch
   for (int i = 0; i < num; ++i) {
-	//LOG(INFO) << "img id: " << i;
     map<int, vector<int> > match_indices; // (label id, (prior id, matched gt id))
     map<int, vector<float> > match_overlaps; // (label id, (prior id, matched overlap area))
 
@@ -840,7 +837,7 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
 
     // Check if there is ground truth for current image.
     if (all_gt_bboxes.find(i) == all_gt_bboxes.end()) {
-		//LOG(INFO) << "NO ground truth for current img " << i;
+	  //LOG(INFO) << "NO ground truth for current img " << i;
       // There is no gt for current image. All predictions are negative.
       all_match_indices->push_back(match_indices);
       all_match_overlaps->push_back(match_overlaps);
@@ -848,7 +845,6 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
 	  all_clean_gt_indices->push_back(gt_clean);
 	  all_extra_neg_indices->push_back(temp_extra_neg_indices);
 	  all_extra_neg_match_indices->push_back(temp_extra_neg_match_indices);
-	  //LOG(INFO) << "temp_extra_neg_indices " << temp_extra_neg_indices.size();
       continue;
     }
     // Find match between predictions and ground truth.
@@ -859,7 +855,6 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
 	MarkCleanGtBBoxes(gt_bboxes, &gt_clean, gt_clean_thrshld);
 
     if (!use_prior_for_matching) {
-		//LOG(INFO) << "NOT Use prior bboxes.";
       for (int c = 0; c < loc_classes; ++c) {
         int label = share_location ? -1 : c;
         if (!share_location && label == background_label_id) {
@@ -880,7 +875,6 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
 				  &temp_extra_neg_indices, &temp_extra_neg_match_indices);
       }
     } else {
-		//LOG(INFO) << "USE prior bboxes.";
       // Use prior bboxes to match against all ground truth.
       vector<int> temp_match_indices;
       vector<float> temp_match_overlaps;
@@ -924,7 +918,6 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
 	all_extra_neg_indices->push_back(temp_extra_neg_indices);
 	all_extra_neg_match_indices->push_back(temp_extra_neg_match_indices);
   }
-  //LOG(INFO) << "all_extra_neg_indices: " << all_extra_neg_indices->size();
 }
 
 int CountNumMatches(const vector<map<int, vector<int> > >& all_match_indices,
@@ -965,7 +958,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
 	vector<map<int, vector<int> > >* all_match_indices, vector<vector<int> >* all_neg_indices) {
 
   int num = all_loc_preds.size();
-  //LOG(INFO) << "---------MineHardExamples";
   // CHECK_EQ(num, all_match_overlaps.size());
   // CHECK_EQ(num, all_match_indices->size());
   // all_neg_indices->clear();
@@ -1053,9 +1045,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
     set<int> sel_indices;
     vector<int> neg_indices;
 
-	//------------
-	set<int> extra_sel_indices;
-
+	set<int> extra_sel_indices; //------------ to store bodylet negative samples
     for (map<int, vector<int> >::iterator it = match_indices.begin();
          it != match_indices.end(); ++it) {
       const int label = it->first;
@@ -1069,7 +1059,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
           ++num_sel;
         }
       }
-
 	  //-----------
 	  int num_extra_neg = extra_neg_indices.size();
 	  vector<pair<float, int> > extra_loss_indices;
@@ -1078,9 +1067,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
 		  extra_loss_indices.push_back(std::make_pair(loss[mm], mm));
 	  }
 	  
-	  //LOG(INFO) << "num_sel BEFORE removing: " << num_sel;
-	  //LOG(INFO) << "num_extra_neg BEFORE removing: " << num_extra_neg;
-
       if (mining_type == MultiBoxLossParameter_MiningType_MAX_NEGATIVE) {
         int num_pos = 0;
         for (int m = 0; m < match_indices[label].size(); ++m) {
@@ -1088,18 +1074,14 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
             ++num_pos;
           }
         }
-		//LOG(INFO) << "num_pos " << num_pos;
         num_sel = std::min(static_cast<int>(num_pos * neg_pos_ratio), num_sel);
-		//LOG(INFO) << "num_sel " << num_sel;
-		// ---------
+		// The number of bodylet negative examples is (0.5 * the number of classic negative examples)
 		num_extra_neg = std::min(static_cast<int>(num_pos * neg_pos_ratio * 0.5), num_extra_neg);
-		//LOG(INFO) << "num_extra_neg: " << num_extra_neg;
 
       } else if (mining_type == MultiBoxLossParameter_MiningType_HARD_EXAMPLE) {
         CHECK_GT(sample_size, 0);
         num_sel = std::min(sample_size, num_sel);
       }
-
 	  
       // Select samples.
       if (has_nms_param && nms_threshold > 0) {
@@ -1133,7 +1115,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
         vector<int> nms_indices;
         ApplyNMS(sel_bboxes, sel_loss, nms_threshold, top_k, &nms_indices);
         if (nms_indices.size() < num_sel) {
-          //LOG(INFO) << "not enough sample after nms: " << nms_indices.size();
         }
         // Pick top example indices after nms.
         num_sel = std::min(static_cast<int>(nms_indices.size()), num_sel);
@@ -1141,21 +1122,16 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
           sel_indices.insert(loss_indices[nms_indices[n]].second);
         }
       } else {
-		// LOG(INFO) << "NOT doing NMS!";
         // Pick top example indices based on loss.
         std::sort(loss_indices.begin(), loss_indices.end(), SortScorePairDescend<int>);
         for (int n = 0; n < num_sel; ++n) {
           sel_indices.insert(loss_indices[n].second);
         }
-		// -----------------
 		std::sort(extra_loss_indices.begin(), extra_loss_indices.end(), SortScorePairDescend<int>);
 		for (int n = 0; n < num_extra_neg; ++n) {
 			extra_sel_indices.insert(extra_loss_indices[n].second);
 		}
       }
-
-	  //LOG(INFO) << "sel_indices: " << sel_indices.size();
-	  //LOG(INFO) << "extra_sel_indices: " << extra_sel_indices.size();
 
       // Update the match_indices and select neg_indices.
       for (int m = 0; m < match_indices[label].size(); ++m) {
@@ -1170,9 +1146,8 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
             neg_indices.push_back(m);
             *num_negs += 1;
           }
-		  // -------
+		  // bodylet negative samples
 		  else if (extra_sel_indices.find(m) != extra_sel_indices.end()){
-			  //LOG(INFO) << "temp_sel_indices.find(m) != ";
 			  neg_indices.push_back(m);
 			  *num_negs += 1;
 		  }
@@ -1181,7 +1156,6 @@ void MineHardExamples(const Blob<Dtype>& conf_blob, const vector<LabelBBox>& all
     }
     all_neg_indices->push_back(neg_indices);
   }
-  //LOG(INFO) << "num_negs: " << *num_negs;
 }
 
 // Explicite initialization.
@@ -1452,22 +1426,6 @@ void EncodeCleanPrediction(const Dtype* clean_data, const int num, const int num
 			}// prior
 
 		} //iterator
-
-		//for (int n = 0; n < all_neg_indices[i].size(); n++){
-		//	int j = all_neg_indices[i][n];
-		//	caffe_copy<Dtype>(1, clean_data + j * 1, clean_pred_data + count * 1);
-		//	map<int, int>::const_iterator gt_it = all_extra_neg_match_indices[i].find(j);
-		//	if (gt_it != all_extra_neg_match_indices[i].end()){
-		//		int neg_gt_id = gt_it->second;
-		//		CHECK_LE(neg_gt_id, all_clean_gt_indices[i].size());
-		//		clean_gt_data[count] = all_clean_gt_indices[i][neg_gt_id];
-		//	}
-		//	else{
-		//		clean_gt_data[count] = 0;
-		//	}		
-		//	 // -------------
-		//	count++;
-		//}
 		clean_data += num_priors * 1;
 	}// num of img
 	CHECK_EQ(count, num_clean);

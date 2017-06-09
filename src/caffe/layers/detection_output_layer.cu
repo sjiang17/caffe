@@ -22,9 +22,7 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
   const Dtype* loc_data = bottom[0]->gpu_data();
   const Dtype* prior_data = bottom[2]->gpu_data();
   const int num = bottom[0]->num();
-  
-  //LOG(INFO)<<"inside output.cu";
-  
+
   // Decode predictions.
   Dtype* bbox_data = bbox_preds_.mutable_gpu_data();
   const int loc_count = bbox_preds_.count(); // = 98624 = 24656*4
@@ -42,22 +40,14 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
   } else {
     bbox_cpu_data = bbox_preds_.cpu_data();
   }
-//LOG(INFO)<<"finished loc permute";
   // Retrieve all confidences.
   Dtype* conf_permute_data = conf_permute_.mutable_gpu_data();
   PermuteDataGPU<Dtype>(bottom[1]->count(), bottom[1]->gpu_data(),
       num_classes_, num_priors_, 1, conf_permute_data);
   const Dtype* conf_cpu_data = conf_permute_.cpu_data();
-//LOG(INFO)<<"finished conf permute";
-
-  // const Dtype* clean_data = bottom[3]->gpu_data();
-  
-  //LOG(INFO)<<"bottom[3]->count()"<<bottom[3]->count();
-  
   Dtype* clean_permute_data = clean_permute_.mutable_gpu_data();
   PermuteDataGPU<Dtype>(bottom[3]->count(), bottom[3]->gpu_data(), 1, num_priors_, 1, clean_permute_data);
   const Dtype* clean_cpu_data = clean_permute_.cpu_data();
-  //LOG(INFO)<<"finished clean permute";
 
   int num_kept = 0;
   vector<map<int, vector<int> > > all_indices; // (img id, (label, (   , prior id)))
@@ -83,8 +73,11 @@ void DetectionOutputLayer<Dtype>::Forward_gpu(
       if (!share_location_) {
         cur_bbox_data += c * num_priors_ * 4;
       }
-      //ApplyNMSFast(cur_bbox_data, cur_conf_data, num_priors_,
-      //    confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c])); // indices store the kept prior id for current label
+	  // Apply Standard NMS
+      /*ApplyNMSFast(cur_bbox_data, cur_conf_data, num_priors_,
+          confidence_threshold_, nms_threshold_, eta_, top_k_, &(indices[c])); // indices store the kept prior id for current label */
+
+	  // Apply instance number aware NMS
       ApplyCleanNMSFast(cur_bbox_data, cur_conf_data, num_priors_, confidence_threshold_, 
 						nms_threshold_, eta_, top_k_, &(indices[c]), cur_clean_data, 
 						clean_score_threshold_, clean_nms_threshold_, clean_nms_conf_diff_);

@@ -79,12 +79,12 @@ resume_training = False
 remove_old_models = False
 
 # The database file for training data. Created by data/coco/create_data.sh
-train_data = "/home/siyu/dataset/coco/lmdb/COCO_Train2014_person_lmdb"
+train_data = "/home/siyu/dataset/voc/lmdb/VOC0712_train_lmdb"
 # The database file for testing data. Created by data/coco/create_data.sh
-test_data = "/home/siyu/dataset/coco/lmdb/COCO_Val2014_person_lmdb"
+test_data = "/home/siyu/dataset/voc/lmdb/VOC0712_val_lmdb"
 # Specify the batch sampler.
-resize_width = 512
-resize_height = 512
+resize_width = 300
+resize_height = 300
 resize = "{}x{}".format(resize_width, resize_height)
 part_sampler_prob = 0.8
 batch_sampler = [
@@ -254,7 +254,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "{}".format('ssd_coco_part_finetune_clean_lbl_0.8')
+job_name = "{}".format('exp_voc_finetune_pml_0.8')
 # The name of the model. Modify it if you want.
 model_name = "VGG_{}".format(job_name)
 
@@ -279,11 +279,11 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/coco/create_list.sh
-name_size_file = "/home/siyu/dataset/coco/val2014-person-name-size.txt"
+name_size_file = "/home/siyu/dataset/voc/val_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/modify_iter_250000.caffemodel"
+pretrain_model = "models/VGGNet/VGG_ssd_voc_origin_ml_iter_100000.caffemodel"
 # Stores LabelMapItem.
-label_map_file = "/home/siyu/dataset/coco/labelmap_coco-person.prototxt"
+label_map_file = "/home/siyu/dataset/voc/labelmap_voc_person.prototxt"
 
 # MultiBoxLoss parameters.
 num_classes = 2
@@ -324,7 +324,7 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = 512
+min_dim = 300
 # conv4_3 ==> 38 x 38
 # fc7 ==> 19 x 19
 # conv6_2 ==> 10 x 10
@@ -333,7 +333,7 @@ min_dim = 512
 # conv9_2 ==> 1 x 1
 mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2']
 # in percent %
-min_ratio = 15
+min_ratio = 20
 max_ratio = 90
 step = int(math.floor((max_ratio - min_ratio) / (len(mbox_source_layers) - 2)))
 min_sizes = []
@@ -341,8 +341,8 @@ max_sizes = []
 for ratio in xrange(min_ratio, max_ratio + 1, step):
   min_sizes.append(min_dim * ratio / 100.)
   max_sizes.append(min_dim * (ratio + step) / 100.)
-min_sizes = [min_dim * 7 / 100.] + min_sizes
-max_sizes = [min_dim * 15 / 100.] + max_sizes
+min_sizes = [min_dim * 10 / 100.] + min_sizes
+max_sizes = [min_dim * 20 / 100.] + max_sizes
 steps = [8, 16, 32, 64, 100, 300]
 aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
 # L2 normalize conv4_3.
@@ -357,13 +357,13 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0,1"
+gpus = "0"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 16
-accum_batch_size = 16
+batch_size = 32
+accum_batch_size = 32
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -384,7 +384,7 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image = 10000
+num_test_image = 2232
 test_batch_size = 2
 test_iter = num_test_image / test_batch_size
 
@@ -394,13 +394,13 @@ solver_param = {
     'weight_decay': 0.00005,
     'lr_policy': "multistep",
     # 'stepvalue': [280000, 360000, 400000],
-    'stepvalue': [100000, 150000],
+    'stepvalue': [30000, 50000],
     # 'stepsize': 100000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 200000,
-    'snapshot': 10000,
+    'max_iter': 60000,
+    'snapshot': 5000,
     'display': 100,
     'average_loss': 100,
     'type': "SGD",
@@ -410,7 +410,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 5000,
+    'test_interval': 10000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
@@ -421,7 +421,7 @@ det_out_param = {
     'num_classes': num_classes,
     'share_location': share_location,
     'background_label_id': background_label_id,
-    'nms_param': {'nms_threshold': 0.45, 'top_k': 200},
+    'nms_param': {'nms_threshold': 0.45, 'top_k': 400},
     'save_output_param': {
         'output_directory': output_result_dir,
         'output_name_prefix': "detections_minival_ssd512_results",
