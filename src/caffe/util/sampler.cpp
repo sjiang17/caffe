@@ -65,11 +65,6 @@ bool SatisfySampleConstraint(const NormalizedBBox& sampled_bbox,
     }
     // Test object coverage.
     if (has_object_coverage) {
-		//LOG(INFO) << "has_object_coverage";
-		//LOG(INFO) << "sampled_bbox xmin: " << sampled_bbox.xmin();
-		//LOG(INFO) << "sampled_bbox ymin: " << sampled_bbox.ymin();
-		//LOG(INFO) << "sampled_bbox xmax: " << sampled_bbox.xmax();
-		//LOG(INFO) << "sampled_bbox ymax: " << sampled_bbox.ymax();
       const float object_coverage = BBoxCoverage(object_bbox, sampled_bbox);
 	  
       if (sample_constraint.has_min_object_coverage() &&
@@ -81,8 +76,6 @@ bool SatisfySampleConstraint(const NormalizedBBox& sampled_bbox,
         continue;
       }
       found = true;
-	  /*if (found)
-		  LOG(INFO) << "object_coverage: " << object_coverage;*/
     }
     if (found) {
       return true;
@@ -125,24 +118,14 @@ void SampleBBox(const Sampler& sampler, NormalizedBBox* sampled_bbox) {
   sampled_bbox->set_ymax(h_off + bbox_height);
 }
 
-// ----------------my-----------------
+// ---- abandoned, not in use
 void SampleBBox(const Sampler& sampler, NormalizedBBox* sampled_bbox, const vector<float>& origin_coord) {
 	// Get random scale.
-
-	//LOG(INFO) << "n xmin: " << origin_coord[0];
-	//LOG(INFO) << "n ymin: " << origin_coord[1];
-	//LOG(INFO) << "n width: " << origin_coord[2];
-	//LOG(INFO) << "n height: " << origin_coord[3];
 
 	float x_origin = origin_coord[0];
 	float y_origin = origin_coord[1];
 	float w_origin = origin_coord[2];
 	float h_origin = origin_coord[3];
-
-	//LOG(INFO) << "limit xmin: " << x_origin;
-	//LOG(INFO) << "limit ymin: " << y_origin;
-	//LOG(INFO) << "limit xmax: " << x_origin + w_origin;
-	//LOG(INFO) << "limit ymax: " << y_origin + h_origin;
 
 	CHECK_GE(sampler.max_scale(), sampler.min_scale());
 	CHECK_GT(sampler.min_scale(), 0.);
@@ -150,9 +133,8 @@ void SampleBBox(const Sampler& sampler, NormalizedBBox* sampled_bbox, const vect
 	float scale;
 
 	float new_ratio = sqrt(w_origin * h_origin);
-	//LOG(INFO) << "new ratio: " << new_ratio;
 	caffe_rng_uniform(1, sampler.min_scale() * new_ratio, sampler.max_scale() * new_ratio, &scale);
-	//LOG(INFO) << "scale: " << scale;
+
 	// Get random aspect ratio.
 	CHECK_GE(sampler.max_aspect_ratio(), sampler.min_aspect_ratio());
 	CHECK_GT(sampler.min_aspect_ratio(), 0.);
@@ -161,17 +143,12 @@ void SampleBBox(const Sampler& sampler, NormalizedBBox* sampled_bbox, const vect
 	float min_aspect_ratio = std::max<float>(sampler.min_aspect_ratio(), std::pow(scale, 2.));
 	float max_aspect_ratio = std::min<float>(sampler.max_aspect_ratio(), 1 / std::pow(scale, 2.));
 
-	//LOG(INFO) << "min_aspect_ratio: " << min_aspect_ratio;
-	//LOG(INFO) << "max_aspect_ratio: " << max_aspect_ratio;
 	caffe_rng_uniform(1, min_aspect_ratio, max_aspect_ratio, &aspect_ratio);
-	//LOG(INFO) << "aspect_ratio: " << aspect_ratio;
+
 
 	// Figure out bbox dimension.
 	float bbox_width = scale * sqrt(aspect_ratio);
 	float bbox_height = scale / sqrt(aspect_ratio);
-
-	//LOG(INFO) << "bbox_width: " << bbox_width;
-	//LOG(INFO) << "bbox_height: " << bbox_height;
 
 	// Figure out top left coordinates.
 	float w_off, h_off;
@@ -182,19 +159,6 @@ void SampleBBox(const Sampler& sampler, NormalizedBBox* sampled_bbox, const vect
 	sampled_bbox->set_ymin(h_off);
 	sampled_bbox->set_xmax(w_off + bbox_width);
 	sampled_bbox->set_ymax(h_off + bbox_height);
-
-	//LOG(INFO) << "crop xmin: " << w_off;
-	//LOG(INFO) << "crop ymin: " << h_off;
-	//LOG(INFO) << "crop xmax: " << w_off + bbox_width;
-	//LOG(INFO) << "crop ymax: " << h_off + bbox_height;
-
-	/*LOG(INFO) << "xmin in limit: " << (w_off > x_origin);
-	LOG(INFO) << "ymin in limit: " << (h_off > y_origin);
-	LOG(INFO) << "xmax in limit: " << ((w_off + bbox_width) < (x_origin + w_origin));
-	LOG(INFO) << "ymax in limit: " << ((h_off + bbox_height) < (y_origin + h_origin));
-
-	LOG(INFO) << "============================";*/
-
 }
 
 void GenerateSamples(const NormalizedBBox& source_bbox,
@@ -221,7 +185,7 @@ void GenerateSamples(const NormalizedBBox& source_bbox,
   }
 }
 
-// --------my-------
+// ---- abandoned, not in use
 void GenerateSamples(const NormalizedBBox& source_bbox,
 	const vector<NormalizedBBox>& object_bboxes,
 	const BatchSampler& batch_sampler,
@@ -270,8 +234,7 @@ void GenerateBatchSamples(const AnnotatedDatum& anno_datum,
 
 void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
 	const vector<BatchSampler>& batch_samplers,
-	vector<NormalizedBBox>* sampled_part_bboxes/*,
-	const vector<float>& origin_coord*/) {
+	vector<NormalizedBBox>* sampled_part_bboxes) {
 	sampled_part_bboxes->clear();
 	vector<NormalizedBBox> object_bboxes;
 	GroupObjectBBoxes(anno_datum, &object_bboxes);
@@ -283,9 +246,7 @@ void GenerateBatchSamples_Part(const AnnotatedDatum& anno_datum,
 			unit_bbox.set_xmax(1);
 			unit_bbox.set_ymax(1);
 			if (batch_samplers[i].sampler_type() == 1){
-				//LOG(INFO) << "sampler part";
-				//CHECK_EQ(batch_samplers[i].sampler_type(), 1);
-				GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_part_bboxes/*, origin_coord*/);
+				GenerateSamples(unit_bbox, object_bboxes, batch_samplers[i], sampled_part_bboxes);
 			}
 		}
 	}
