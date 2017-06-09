@@ -84,7 +84,8 @@ if __name__ == "__main__":
   # check list file format is correct
   with open(list_file, "r") as lf:
     for line in lf.readlines():
-      img_file, anno = line.strip("\n").split(" ")
+      print line
+      img_file, anno = line.strip("\n").strip("\r").split(" ")
       if not os.path.exists(root_dir + img_file):
         print "image file: {} does not exist".format(root_dir + img_file)
       if anno_type == "classification":
