@@ -47,7 +47,7 @@ def get_labelname(labelmap, labels):
 
 # model_def = 'D:\\v-sij\\COMPILE_SUCCESS_SSD\\caffe-windows\\models\\VGGNet\\VID\\SSD_500x500\\0804_lr_5e-4\\deploy.prototxt'
 model_def = '/home/siyu/ssd-dev/clean-ssd/jobs/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/deploy.prototxt'
-model_weights = '/home/siyu/ssd-dev/clean-ssd/models/VGGNet/ssd_coco_part_finetune_clean_lbl_0.8/VGG_ssd_coco_part_finetune_clean_lbl_0.8_iter_120000.caffemodel'
+model_weights = '/home/siyu/ssd-dev/clean-ssd/models/VGGNet/modify_iter_250000.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -63,8 +63,8 @@ transformer.set_channel_swap('data', (2,1,0))  # the reference model has channel
 image_resize = 512
 net.blobs['data'].reshape(1,3,image_resize,image_resize)
 
-data_root_path = '/home/siyu/dataset/coco/Val2014/JPEGImages'
-result_root_path = '/home/siyu/detection_results/coco/ssd_coco_part_finetune_clean_lbl_0.8_120k'
+data_root_path = '/home/siyu/dataset/coco/Val2014/Crop_JPEGImages0'
+result_root_path = '/home/siyu/detection_results/coco/0Crop_ssd_coco_origin_mat_lbl_250k'
 # subdirs = os.listdir(data_root_path)
 
 if not os.path.isdir(result_root_path):
